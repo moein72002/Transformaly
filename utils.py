@@ -322,6 +322,7 @@ def forward_one_epoch(loader,
 
         inputs = inputs.to(device)
 
+        print(f"inputs.size: {inputs.size}")
         origin_block_outputs, cloned_block_outputs = net(inputs)
         loss = criterion(cloned_block_outputs, origin_block_outputs)
         losses.append(loss.item())
