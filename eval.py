@@ -99,10 +99,10 @@ if __name__ == '__main__':
 
         if args['dataset'] == 'wbc1':
             trainset, testset = get_wbc1_train_and_test_dataset_for_anomaly_detection()
-            anomaly_targets = testset.targets
+            anomaly_targets = [1 if label == testset.normal_class_label else 0 for label in testset.targets]
         elif args['dataset'] == 'wbc2':
             trainset, testset = get_wbc2_train_and_test_dataset_for_anomaly_detection()
-            anomaly_targets = testset.targets
+            anomaly_targets = [1 if label == testset.normal_class_label else 0 for label in testset.targets]
         else:
             trainset, testset = get_datasets_for_ViT(dataset=args['dataset'],
                                                      data_path=args['data_path'],

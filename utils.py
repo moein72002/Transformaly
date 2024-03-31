@@ -206,10 +206,10 @@ def extract_fetures(base_path,
                 # get dataset
                 if dataset == 'wbc1':
                     trainset, testset = get_wbc1_train_and_test_dataset_for_anomaly_detection()
-                    anomaly_targets = testset.targets
+                    anomaly_targets = [1 if label == testset.normal_class_label else 0 for label in testset.targets]
                 elif dataset == 'wbc2':
                     trainset, testset = get_wbc2_train_and_test_dataset_for_anomaly_detection()
-                    anomaly_targets = testset.targets
+                    anomaly_targets = [1 if label == testset.normal_class_label else 0 for label in testset.targets]
                 else:
                     trainset_origin, testset = get_datasets(dataset, data_path, val_transforms)
                     indices = [i for i, val in enumerate(trainset_origin.targets)
@@ -473,10 +473,10 @@ def train(model, best_model, args, dataloaders,
             if args['plot_every_layer_summarization']:
                 if dataset == 'wbc1':
                     _, testset = get_wbc1_train_and_test_dataset_for_anomaly_detection()
-                    anomaly_targets = testset.targets
+                    anomaly_targets = [1 if label == testset.normal_class_label else 0 for label in testset.targets]
                 elif dataset == 'wbc2':
                     _, testset = get_wbc2_train_and_test_dataset_for_anomaly_detection()
-                    anomaly_targets = testset.targets
+                    anomaly_targets = [1 if label == testset.normal_class_label else 0 for label in testset.targets]
                 else:
                     _, testset = get_datasets_for_ViT(dataset=args['dataset'],
                                                       data_path = args['data_path'],
