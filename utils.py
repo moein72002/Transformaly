@@ -208,12 +208,12 @@ def extract_fetures(base_path,
                     trainset, testset = get_wbc1_train_and_test_dataset_for_anomaly_detection()
                     anomaly_targets = [0 if label == testset.normal_class_label else 1 for label in testset.targets]
                     just_testset = get_just_wbc2_test_dataset_for_anomaly_detection()
-                    just_test_anomaly_targets = [0 if label == just_testset.normal_class_label else 1 for label in testset.targets]
+                    just_test_anomaly_targets = [0 if label == just_testset.normal_class_label else 1 for label in just_testset.targets]
                 elif dataset == 'wbc2':
                     trainset, testset = get_wbc2_train_and_test_dataset_for_anomaly_detection()
                     anomaly_targets = [0 if label == testset.normal_class_label else 1 for label in testset.targets]
                     just_testset = get_just_wbc1_test_dataset_for_anomaly_detection()
-                    just_test_anomaly_targets = [0 if label == just_testset.normal_class_label else 1 for label in testset.targets]
+                    just_test_anomaly_targets = [0 if label == just_testset.normal_class_label else 1 for label in just_testset.targets]
                 else:
                     trainset_origin, testset = get_datasets(dataset, data_path, val_transforms)
                     indices = [i for i, val in enumerate(trainset_origin.targets)
