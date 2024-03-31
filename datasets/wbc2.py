@@ -11,6 +11,8 @@ import torch
 from torch.utils.data import Dataset
 import pandas as pd
 from torchvision import transforms as T
+
+from utils import get_transforms
 from visualize.count_labels import count_unique_labels_of_dataset
 
 class WBC_dataset2(Dataset):
@@ -20,11 +22,8 @@ class WBC_dataset2(Dataset):
         self.normal_class_label = normal_class_label
         self.img_labels = pd.read_csv(csv_path)
         self.img_labels = self.img_labels[self.img_labels['class'] != 5]
-        self.transform = T.Compose([T.Resize(resize, Image.ANTIALIAS),
-                                      T.CenterCrop(224),
-                                      T.ToTensor(),
-                                      T.Normalize(mean=[0.485, 0.456, 0.406],
-                                                  std=[0.229, 0.224, 0.225])])
+        val_transforms = get_transforms(dataset='wbc2', use_imagenet=True)
+        self.transform = val_transforms
 
     def __getitem__(self, idx):
         img_path = f"{self.path}/{str(self.img_labels.iloc[idx, 0]).zfill(3)}.bmp"
