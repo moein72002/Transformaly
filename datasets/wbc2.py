@@ -42,7 +42,7 @@ class WBC_dataset2(Dataset):
 
         image = self.transform(image)
 
-        target = 1 if label == self.normal_class_label else 0
+        target = 0 if label == self.normal_class_label else 1
         return image, target
 
     def __len__(self):
