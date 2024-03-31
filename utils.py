@@ -262,6 +262,12 @@ def extract_fetures(base_path,
                 if output_train_features and output_test_features:
                     print_and_add_to_log("Calculate KNN score", logging)
                     distances = knn_score(train_features, test_features, n_neighbours=2)
+
+                    # Convert list to set to remove duplicates and count unique elements
+                    unique_values = set(anomaly_targets)
+                    print(f"unique_values: {unique_values}")
+                    print(f'Number of unique values in anomaly_targets: {len(unique_values)}')
+
                     auc = roc_auc_score(anomaly_targets, distances)
                     print_and_add_to_log(auc, logging)
 
