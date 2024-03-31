@@ -12,6 +12,8 @@ from utils import print_and_add_to_log, get_datasets_for_ViT, \
     extract_fetures
 from os.path import join
 from pytorch_pretrained_vit.model import AnomalyViT, ViT
+from datasets.wbc1 import get_wbc1_train_and_test_dataset_for_anomaly_detection, get_wbc1_id_test_dataset, get_just_wbc1_test_dataset_for_anomaly_detection
+from datasets.wbc2 import get_wbc2_train_and_test_dataset_for_anomaly_detection, get_wbc2_id_test_dataset, get_just_wbc2_test_dataset_for_anomaly_detection
 
 if __name__ == '__main__':
 
@@ -36,7 +38,9 @@ if __name__ == '__main__':
     args['use_imagenet'] = True
     BASE_PATH = 'experiments'
 
-    if args['dataset'] == 'cifar10':
+    if args['dataset'] in ['wbc1', 'wbc2']:
+        _classes = [1]
+    elif args['dataset'] == 'cifar10':
         _classes = range(10)
     elif args['dataset'] == 'fmnist':
         _classes = range(10)
@@ -101,22 +105,32 @@ if __name__ == '__main__':
         print_and_add_to_log(
             "====================================================================",
             logging)
-
-        trainset, testset = get_datasets_for_ViT(dataset=args['dataset'],
-                                                 data_path=args['data_path'],
-                                                 one_vs_rest=args['unimodal'],
-                                                 _class=args['_class'],
-                                                 normal_test_sample_only=True,
-                                                 use_imagenet=args['use_imagenet']
-                                                 )
-
-        _, ood_test_set = get_datasets_for_ViT(dataset=args['dataset'],
-                                               data_path=args['data_path'],
-                                               one_vs_rest=not args['unimodal'],
-                                               _class=args['_class'],
-                                               normal_test_sample_only=True,
-                                               use_imagenet=args['use_imagenet']
-                                               )
+        if args['dataset'] == 'wbc1':
+            trainset, _ = get_wbc1_train_and_test_dataset_for_anomaly_detection()
+            testset = get_wbc1_id_test_dataset()
+            ood_test_set = get_wbc1_id_test_dataset()
+            just_testset = get_just_wbc2_test_dataset_for_anomaly_detection()
+        elif args['dataset'] == 'wbc2':
+            trainset, _ = get_wbc2_train_and_test_dataset_for_anomaly_detection()
+            testset = get_wbc2_id_test_dataset()
+            ood_test_set = get_wbc2_id_test_dataset()
+            just_testset = get_just_wbc1_test_dataset_for_anomaly_detection()
+        else:
+            trainset, testset = get_datasets_for_ViT(dataset=args['dataset'],
+                                                     data_path=args['data_path'],
+                                                     one_vs_rest=args['unimodal'],
+                                                     _class=args['_class'],
+                                                     normal_test_sample_only=True,
+                                                     use_imagenet=args['use_imagenet']
+                                                     )
+        if not args['dataset'] in ['wbc1', 'wbc2']:
+            _, ood_test_set = get_datasets_for_ViT(dataset=args['dataset'],
+                                                   data_path=args['data_path'],
+                                                   one_vs_rest=not args['unimodal'],
+                                                   _class=args['_class'],
+                                                   normal_test_sample_only=True,
+                                                   use_imagenet=args['use_imagenet']
+                                                   )
 
         print_and_add_to_log("---------------", logging)
         print_and_add_to_log(f'Class size: {args["_class"]}', logging)
@@ -170,7 +184,8 @@ if __name__ == '__main__':
                                                 device='cuda',
                                                 seed=42,
                                                 model_checkpoint_path=model_checkpoint_path,
-                                                anomaly_classes=anomaly_classes
+                                                anomaly_classes=anomaly_classes,
+                                                dataset=args['dataset']
                                                 )
 
         training_losses = cur_acc_loss['training_losses']

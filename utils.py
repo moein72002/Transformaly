@@ -24,6 +24,9 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from torchvision.datasets import CIFAR10, CIFAR100, FashionMNIST, ImageFolder
 from torchvision.transforms import Compose
+from datasets.wbc1 import get_wbc1_train_and_test_dataset_for_anomaly_detection, get_wbc1_id_test_dataset, get_just_wbc1_test_dataset_for_anomaly_detection
+from datasets.wbc2 import get_wbc2_train_and_test_dataset_for_anomaly_detection, get_wbc2_id_test_dataset, get_just_wbc2_test_dataset_for_anomaly_detection
+
 
 
 class DiorDataset(Dataset):
@@ -198,10 +201,18 @@ def extract_fetures(base_path,
                 model.to('cuda')
 
                 # get dataset
-                trainset_origin, testset = get_datasets(dataset, data_path, val_transforms)
-                indices = [i for i, val in enumerate(trainset_origin.targets)
-                           if val not in anomaly_classes]
-                trainset = torch.utils.data.Subset(trainset_origin, indices)
+                if dataset == 'wbc1':
+                    trainset, testset = get_wbc1_train_and_test_dataset_for_anomaly_detection()
+                    anomaly_targets = testset.targets
+                elif dataset == 'wbc2':
+                    trainset, testset = get_wbc2_train_and_test_dataset_for_anomaly_detection()
+                    anomaly_targets = testset.targets
+                else:
+                    trainset_origin, testset = get_datasets(dataset, data_path, val_transforms)
+                    indices = [i for i, val in enumerate(trainset_origin.targets)
+                               if val not in anomaly_classes]
+                    trainset = torch.utils.data.Subset(trainset_origin, indices)
+                    anomaly_targets = [1 if i in anomaly_classes else 0 for i in testset.targets]
 
                 print_and_add_to_log(f"Train dataset len: {len(trainset)}", logging)
                 print_and_add_to_log(f"Test dataset len: {len(testset)}", logging)
@@ -210,7 +221,6 @@ def extract_fetures(base_path,
                 trainsetLoader = DataLoader(trainset, batch_size=BATCH_SIZE, shuffle=False)
                 testsetLoader = DataLoader(testset, batch_size=BATCH_SIZE, shuffle=False)
 
-                anomaly_targets = [1 if i in anomaly_classes else 0 for i in testset.targets]
 
                 extracted_features_path = join(base_feature_path, 'extracted_features')
                 if not os.path.exists(extracted_features_path):
@@ -335,7 +345,7 @@ def forward_one_epoch(loader,
 def train(model, best_model, args, dataloaders,
           model_checkpoint_path,
           output_path, device='cuda',
-          seed=42, anomaly_classes=None):
+          seed=42, anomaly_classes=None, dataset=None):
     torch.manual_seed(0)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
@@ -451,18 +461,25 @@ def train(model, best_model, args, dataloaders,
             #     break
 
             if args['plot_every_layer_summarization']:
-                _, testset = get_datasets_for_ViT(dataset=args['dataset'],
-                                                  data_path = args['data_path'],
-                                                  one_vs_rest=args['unimodal'],
-                                                  _class=args['_class'],
-                                                  normal_test_sample_only=False,
-                                                  use_imagenet=args['use_imagenet']
-                                                  )
+                if dataset == 'wbc1':
+                    _, testset = get_wbc1_train_and_test_dataset_for_anomaly_detection()
+                    anomaly_targets = testset.targets
+                elif dataset == 'wbc2':
+                    _, testset = get_wbc2_train_and_test_dataset_for_anomaly_detection()
+                    anomaly_targets = testset.targets
+                else:
+                    _, testset = get_datasets_for_ViT(dataset=args['dataset'],
+                                                      data_path = args['data_path'],
+                                                      one_vs_rest=args['unimodal'],
+                                                      _class=args['_class'],
+                                                      normal_test_sample_only=False,
+                                                      use_imagenet=args['use_imagenet']
+                                                      )
+                    anomaly_targets = [0 if i in anomaly_classes else 1 for i in testset.targets]
 
                 eval_test_loader = torch.utils.data.DataLoader(testset,
                                                                batch_size=args['batch_size'],
                                                                shuffle=False)
-                anomaly_targets = [0 if i in anomaly_classes else 1 for i in testset.targets]
 
                 model = model.eval()
                 outputs_recon_scores = get_finetuned_features(model,

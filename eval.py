@@ -15,6 +15,9 @@ import torch.nn
 from utils import print_and_add_to_log, get_datasets_for_ViT, \
     Identity, get_finetuned_features
 from pytorch_pretrained_vit.model import AnomalyViT
+from datasets.wbc1 import get_wbc1_train_and_test_dataset_for_anomaly_detection, get_wbc1_id_test_dataset, get_just_wbc1_test_dataset_for_anomaly_detection
+from datasets.wbc2 import get_wbc2_train_and_test_dataset_for_anomaly_detection, get_wbc2_id_test_dataset, get_just_wbc2_test_dataset_for_anomaly_detection
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='')
@@ -32,7 +35,9 @@ if __name__ == '__main__':
     args['use_imagenet'] = True
     BASE_PATH = 'experiments'
 
-    if args['dataset'] == 'cifar10':
+    if args['dataset'] in ['wbc1', 'wbc2']:
+        _classes = [1]
+    elif args['dataset'] == 'cifar10':
         _classes = range(10)
     elif args['dataset'] == 'fmnist':
         _classes = range(10)
@@ -92,13 +97,21 @@ if __name__ == '__main__':
 
         results['class'].append(args['_class'])
 
-        trainset, testset = get_datasets_for_ViT(dataset=args['dataset'],
-                                                 data_path=args['data_path'],
-                                                 one_vs_rest=args['unimodal'],
-                                                 _class=args['_class'],
-                                                 normal_test_sample_only=False,
-                                                 use_imagenet=args['use_imagenet'],
-                                                 )
+        if args['dataset'] == 'wbc1':
+            trainset, testset = get_wbc1_train_and_test_dataset_for_anomaly_detection()
+            anomaly_targets = testset.targets
+        elif args['dataset'] == 'wbc2':
+            trainset, testset = get_wbc2_train_and_test_dataset_for_anomaly_detection()
+            anomaly_targets = testset.targets
+        else:
+            trainset, testset = get_datasets_for_ViT(dataset=args['dataset'],
+                                                     data_path=args['data_path'],
+                                                     one_vs_rest=args['unimodal'],
+                                                     _class=args['_class'],
+                                                     normal_test_sample_only=False,
+                                                     use_imagenet=args['use_imagenet'],
+                                                     )
+            anomaly_targets = [0 if i in anomaly_classes else 1 for i in testset.targets]
 
         test_loader = torch.utils.data.DataLoader(testset,
                                                   batch_size=args['batch_size'],
@@ -107,7 +120,6 @@ if __name__ == '__main__':
                                                    batch_size=args['batch_size'],
                                                    shuffle=False)
 
-        anomaly_targets = [0 if i in anomaly_classes else 1 for i in testset.targets]
 
         print_and_add_to_log("=====================================================",
                              logging)
