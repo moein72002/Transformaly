@@ -38,7 +38,7 @@ class WBC_dataset1(Dataset):
         img_path = self.data[idx]
         # print(img_path)
         image = Image.open(img_path).convert('RGB')
-        label = self.targets
+        label = self.targets[idx]
 
         image = self.transform(image)
 
