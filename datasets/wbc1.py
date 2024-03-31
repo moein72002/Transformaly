@@ -12,8 +12,9 @@ from torch.utils.data import Dataset
 import pandas as pd
 from torchvision import transforms as T
 
-from utils import get_transforms
 from visualize.count_labels import count_unique_labels_of_dataset
+
+from torchvision.transforms import Compose
 
 class WBC_dataset1(Dataset):
     def __init__(self, images_path="", csv_path="", resize=224, normal_class_label=1):
@@ -22,7 +23,13 @@ class WBC_dataset1(Dataset):
         self.normal_class_label = normal_class_label
         self.img_labels = pd.read_csv(csv_path)
         self.img_labels = self.img_labels[self.img_labels['class label'] != 5]
-        val_transforms = get_transforms(dataset='wbc1', use_imagenet=True)
+        use_imagenet = True
+        val_transforms_list = [
+            transforms.Resize((384, 384)) if use_imagenet else transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+        ]
+        val_transforms = Compose(val_transforms_list)
         self.transform = val_transforms
 
     def __getitem__(self, idx):
