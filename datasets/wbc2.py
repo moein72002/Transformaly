@@ -23,6 +23,7 @@ class WBC_dataset2(Dataset):
         self.normal_class_label = normal_class_label
         self.img_labels = pd.read_csv(csv_path)
         self.img_labels = self.img_labels[self.img_labels['class'] != 5]
+        self.data = [f"{self.path}/{str(image_id).zfill(3)}.bmp" for image_id in self.img_labels['image ID'].tolist()]
         self.targets = self.img_labels['class'].tolist()
         use_imagenet = True
         val_transforms_list = [
@@ -34,7 +35,7 @@ class WBC_dataset2(Dataset):
         self.transform = val_transforms
 
     def __getitem__(self, idx):
-        img_path = f"{self.path}/{str(self.img_labels.iloc[idx, 0]).zfill(3)}.bmp"
+        img_path = self.data[idx]
         # print(img_path)
         image = Image.open(img_path).convert('RGB')
         label = self.targets
