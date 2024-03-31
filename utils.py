@@ -207,9 +207,13 @@ def extract_fetures(base_path,
                 if dataset == 'wbc1':
                     trainset, testset = get_wbc1_train_and_test_dataset_for_anomaly_detection()
                     anomaly_targets = [0 if label == testset.normal_class_label else 1 for label in testset.targets]
+                    just_testset = get_just_wbc2_test_dataset_for_anomaly_detection()
+                    just_test_anomaly_targets = [0 if label == just_testset.normal_class_label else 1 for label in testset.targets]
                 elif dataset == 'wbc2':
                     trainset, testset = get_wbc2_train_and_test_dataset_for_anomaly_detection()
                     anomaly_targets = [0 if label == testset.normal_class_label else 1 for label in testset.targets]
+                    just_testset = get_just_wbc1_test_dataset_for_anomaly_detection()
+                    just_test_anomaly_targets = [0 if label == just_testset.normal_class_label else 1 for label in testset.targets]
                 else:
                     trainset_origin, testset = get_datasets(dataset, data_path, val_transforms)
                     indices = [i for i, val in enumerate(trainset_origin.targets)
@@ -223,6 +227,8 @@ def extract_fetures(base_path,
                 # Create datasetLoaders from trainset and testset
                 trainsetLoader = DataLoader(trainset, batch_size=BATCH_SIZE, shuffle=False)
                 testsetLoader = DataLoader(testset, batch_size=BATCH_SIZE, shuffle=False)
+                if dataset in ['wbc1', 'wbc2']:
+                    just_testsetLoader = DataLoader(just_testset, batch_size=BATCH_SIZE, shuffle=False)
 
 
                 extracted_features_path = join(base_feature_path, 'extracted_features')
@@ -247,6 +253,12 @@ def extract_fetures(base_path,
                                        'test_pretrained_ViT_features.npy'), 'wb') as f:
                             np.save(f, test_features)
 
+                        if dataset in ['wbc1', 'wbc2']:
+                            just_test_features = get_features(model=model, data_loader=just_testsetLoader)
+                            with open(join(extracted_features_path,
+                                           'just_test_pretrained_ViT_features.npy'), 'wb') as f:
+                                np.save(f, just_test_features)
+
                 else:
                     if output_train_features:
                         print_and_add_to_log(f"loading feature from {extracted_features_path}",
@@ -259,9 +271,16 @@ def extract_fetures(base_path,
                                        f'test_pretrained_ViT_features.npy'), 'rb') as f:
                             test_features = np.load(f)
 
+                        if dataset in ['wbc1', 'wbc2']:
+                            with open(join(extracted_features_path,
+                                           f'just_test_pretrained_ViT_features.npy'), 'rb') as f:
+                                just_test_features = np.load(f)
+
                 if output_train_features and output_test_features:
                     print_and_add_to_log("Calculate KNN score", logging)
                     distances = knn_score(train_features, test_features, n_neighbours=2)
+                    if dataset in ['wbc1', 'wbc2']:
+                        just_test_distances = knn_score(train_features, just_test_features, n_neighbours=2)
 
                     # Convert list to set to remove duplicates and count unique elements
                     unique_values = set(anomaly_targets)
@@ -269,6 +288,11 @@ def extract_fetures(base_path,
                     print(f'Number of unique values in anomaly_targets: {len(unique_values)}')
 
                     auc = roc_auc_score(anomaly_targets, distances)
+                    print(f"train {dataset}, test {dataset} -> AUC: {auc}")
+                    if dataset in ['wbc1', 'wbc2']:
+                        just_test_auc = roc_auc_score(just_test_anomaly_targets, just_test_distances)
+                        just_test_dataset_name = "wbc2" if dataset == "wbc1" else "wbc1"
+                        print(f"train {dataset}, test {just_test_dataset_name} -> AUC: {just_test_auc}")
                     print_and_add_to_log(auc, logging)
 
 
