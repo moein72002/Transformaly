@@ -23,7 +23,7 @@ class WBC_dataset1(Dataset):
         self.normal_class_label = normal_class_label
         self.img_labels = pd.read_csv(csv_path)
         self.img_labels = self.img_labels[self.img_labels['class label'] != 5]
-        self.targets = self.img_labels['class label']
+        self.targets = self.img_labels['class label'].tolist()
         use_imagenet = True
         val_transforms_list = [
             transforms.Resize((384, 384)) if use_imagenet else transforms.Resize((224, 224)),
