@@ -128,7 +128,10 @@ def extract_fetures(base_path,
             _classes = range(*manual_class_num_range)
 
         else:
-            _classes = range(number_of_classes)
+            if dataset in ['wbc1', 'wbc2']:
+                _classes = [1]
+            else:
+                _classes = range(number_of_classes)
 
         for _class in _classes:
 
@@ -142,7 +145,7 @@ def extract_fetures(base_path,
                 print_and_add_to_log(f"Class: {_class}", logging)
                 print_and_add_to_log(f"Unimodal setting: {unimodal}", logging)
 
-                assert dataset in ['cifar10', 'cifar100', 'fmnist', 'cats_vs_dogs',
+                assert dataset in ['wbc1', 'wbc2', 'cifar10', 'cifar100', 'fmnist', 'cats_vs_dogs',
                                    'dior'], f"{dataset} not supported yet!"
                 if unimodal:
                     base_feature_path = join(base_path, f'unimodal/{dataset}/class_{str(_class)}')
@@ -581,7 +584,10 @@ def get_transforms(dataset, use_imagenet):
 
 
 def get_number_of_classes(dataset):
-    if dataset == 'cifar10':
+    if dataset in ['wbc1', 'wbc2']:
+        number_of_classes = 4
+
+    elif dataset == 'cifar10':
         number_of_classes = 10
 
     elif dataset == 'cifar100':
