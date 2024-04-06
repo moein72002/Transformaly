@@ -534,6 +534,12 @@ def train(model, best_model, args, dataloaders,
             model = model.train()
 
         if args['test_every_epoch']:
+            # save models
+            torch.save(best_model.state_dict(), join(output_path,
+                                                     'best_full_finetuned_model_state_dict.pkl'))
+            torch.save(model.state_dict(), join(output_path,
+                                                'last_full_finetuned_model_state_dict.pkl'))
+
             if args['use_imagenet']:
                 MODEL_NAME = 'B_16_imagenet1k'
             else:
