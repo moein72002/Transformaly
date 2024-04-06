@@ -28,7 +28,7 @@ if __name__ == '__main__':
                         help='Will evaluate the model ever <eval_every> epochs')
     parser.add_argument('--unimodal', default=False, action='store_true',
                         help='Use the unimodal settings')
-    parser.add_argument('--test_every_epoc', default=False, action='store_true',
+    parser.add_argument('--test_every_epoch', default=False, action='store_true',
                         help='Test every epoch or not')
     parser.add_argument('--plot_every_layer_summarization', default=False, action='store_true',
                         help='plot the per layer AUROC')
