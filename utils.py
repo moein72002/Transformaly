@@ -537,14 +537,14 @@ def train(model, best_model, args, dataloaders,
                 else:
                     MODEL_NAME = 'B_16'
 
-                model = ViT(MODEL_NAME, pretrained=True)
-                model.fc = Identity()
-                model.eval()
+                pretrained_model_for_test = ViT(MODEL_NAME, pretrained=True)
+                pretrained_model_for_test.fc = Identity()
+                pretrained_model_for_test.eval()
 
                 extract_fetures(base_path=BASE_PATH,
                                 data_path=args['data_path'],
                                 datasets=[args['dataset']],
-                                model=model,
+                                model=pretrained_model_for_test,
                                 logging=logging,
                                 calculate_features=True,
                                 unimodal_vals=[args['unimodal']],
@@ -552,6 +552,7 @@ def train(model, best_model, args, dataloaders,
                                 output_train_features=True,
                                 output_test_features=True,
                                 use_imagenet=args['use_imagenet'])
+
             model = model.train()
 
     progress_bar_str = 'Test: repeat %d -- Mean Loss: %.3f | Last Loss: %.3f'
