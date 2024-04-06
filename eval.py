@@ -38,7 +38,7 @@ if __name__ == '__main__':
     if args['dataset'] in ['wbc1', 'wbc2']:
         _classes = [1]
     elif args['dataset'] == 'cifar10':
-        _classes = range(10)
+        _classes = [0]
     elif args['dataset'] == 'fmnist':
         _classes = range(10)
     elif args['dataset'] == 'cifar100':
