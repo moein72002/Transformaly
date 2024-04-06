@@ -12,8 +12,8 @@ from utils import print_and_add_to_log, get_datasets_for_ViT, \
     extract_fetures
 from os.path import join
 from pytorch_pretrained_vit.model import AnomalyViT, ViT
-from datasets.wbc1 import get_wbc1_train_and_test_dataset_for_anomaly_detection, get_wbc1_id_test_dataset, get_just_wbc1_test_dataset_for_anomaly_detection
-from datasets.wbc2 import get_wbc2_train_and_test_dataset_for_anomaly_detection, get_wbc2_id_test_dataset, get_just_wbc2_test_dataset_for_anomaly_detection
+from datasets.wbc1 import get_wbc1_train_and_test_dataset_for_anomaly_detection, get_wbc1_id_test_dataset, get_wbc1_ood_test_dataset, get_just_wbc1_test_dataset_for_anomaly_detection
+from datasets.wbc2 import get_wbc2_train_and_test_dataset_for_anomaly_detection, get_wbc2_id_test_dataset, get_wbc2_ood_test_dataset, get_just_wbc2_test_dataset_for_anomaly_detection
 
 if __name__ == '__main__':
 
@@ -110,12 +110,12 @@ if __name__ == '__main__':
         if args['dataset'] == 'wbc1':
             trainset, _ = get_wbc1_train_and_test_dataset_for_anomaly_detection()
             testset = get_wbc1_id_test_dataset()
-            ood_test_set = get_wbc1_id_test_dataset()
+            ood_test_set = get_wbc1_ood_test_dataset()
             just_testset = get_just_wbc2_test_dataset_for_anomaly_detection()
         elif args['dataset'] == 'wbc2':
             trainset, _ = get_wbc2_train_and_test_dataset_for_anomaly_detection()
             testset = get_wbc2_id_test_dataset()
-            ood_test_set = get_wbc2_id_test_dataset()
+            ood_test_set = get_wbc2_ood_test_dataset()
             just_testset = get_just_wbc1_test_dataset_for_anomaly_detection()
         else:
             trainset, testset = get_datasets_for_ViT(dataset=args['dataset'],

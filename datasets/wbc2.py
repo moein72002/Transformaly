@@ -92,6 +92,23 @@ def get_wbc2_id_test_dataset(id_label=1):
 
     return test_dataset
 
+def get_wbc2_ood_test_dataset(id_label=1):
+    df = pd.read_csv('wbc2_test_dataset.csv')
+    df = df[df['class'] != 5]
+
+    test_data = pd.DataFrame()
+    for label in [id_label]:
+        class_samples = df[df['class'] != label]
+        test_data = pd.concat([test_data, class_samples])
+
+    test_data.to_csv('wbc2_ood_test_dataset.csv', index=False)
+
+    test_dataset = WBC_dataset2(csv_path='wbc2_ood_test_dataset.csv', images_path='wbc/segmentation_WBC/Dataset 2')
+
+    count_unique_labels_of_dataset(test_dataset, "wbc2_ood_test_dataset")
+
+    return test_dataset
+
 def get_just_wbc2_test_dataset_for_anomaly_detection():
     df = pd.read_csv('./wbc/segmentation_WBC/Class Labels of Dataset 2.csv')
     df = df[df['class'] != 5]
