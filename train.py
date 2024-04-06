@@ -28,6 +28,8 @@ if __name__ == '__main__':
                         help='Will evaluate the model ever <eval_every> epochs')
     parser.add_argument('--unimodal', default=False, action='store_true',
                         help='Use the unimodal settings')
+    parser.add_argument('--test_every_epoc', default=False, action='store_true',
+                        help='Test every epoch or not')
     parser.add_argument('--plot_every_layer_summarization', default=False, action='store_true',
                         help='plot the per layer AUROC')
     parser_args = parser.parse_args()
@@ -185,7 +187,9 @@ if __name__ == '__main__':
                                                 seed=42,
                                                 model_checkpoint_path=model_checkpoint_path,
                                                 anomaly_classes=anomaly_classes,
-                                                dataset=args['dataset']
+                                                dataset=args['dataset'],
+                                                _class=_class,
+                                                BASE_PATH=BASE_PATH
                                                 )
 
         training_losses = cur_acc_loss['training_losses']

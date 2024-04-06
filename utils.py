@@ -22,6 +22,7 @@ import torch
 from torch import nn
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
+from pytorch_pretrained_vit.model import ViT
 from torchvision.datasets import CIFAR10, CIFAR100, FashionMNIST, ImageFolder
 from torchvision.transforms import Compose
 from datasets.wbc1 import get_wbc1_train_and_test_dataset_for_anomaly_detection, get_wbc1_id_test_dataset, get_just_wbc1_test_dataset_for_anomaly_detection
@@ -379,7 +380,7 @@ def forward_one_epoch(loader,
 def train(model, best_model, args, dataloaders,
           model_checkpoint_path,
           output_path, device='cuda',
-          seed=42, anomaly_classes=None, dataset=None):
+          seed=42, anomaly_classes=None, dataset=None, _class=None, BASE_PATH=None):
     torch.manual_seed(0)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
@@ -530,6 +531,27 @@ def train(model, best_model, args, dataloaders,
                                             outputs_recon_scores[:, layer_ind])
                     print(f'layer AUROC score: {rot_auc}')
                     print("--------------------------------------------------------")
+            if args['test_every_epoch']:
+                if args['use_imagenet']:
+                    MODEL_NAME = 'B_16_imagenet1k'
+                else:
+                    MODEL_NAME = 'B_16'
+
+                model = ViT(MODEL_NAME, pretrained=True)
+                model.fc = Identity()
+                model.eval()
+
+                extract_fetures(base_path=BASE_PATH,
+                                data_path=args['data_path'],
+                                datasets=[args['dataset']],
+                                model=model,
+                                logging=logging,
+                                calculate_features=True,
+                                unimodal_vals=[args['unimodal']],
+                                manual_class_num_range=[_class],
+                                output_train_features=True,
+                                output_test_features=True,
+                                use_imagenet=args['use_imagenet'])
             model = model.train()
 
     progress_bar_str = 'Test: repeat %d -- Mean Loss: %.3f | Last Loss: %.3f'
