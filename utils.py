@@ -531,6 +531,7 @@ def train(model, best_model, args, dataloaders,
                                             outputs_recon_scores[:, layer_ind])
                     print(f'layer AUROC score: {rot_auc}')
                     print("--------------------------------------------------------")
+            model = model.train()
 
         if args['test_every_epoch']:
             if args['use_imagenet']:
@@ -553,8 +554,6 @@ def train(model, best_model, args, dataloaders,
                             output_train_features=True,
                             output_test_features=True,
                             use_imagenet=args['use_imagenet'])
-
-            model = model.train()
 
     progress_bar_str = 'Test: repeat %d -- Mean Loss: %.3f | Last Loss: %.3f'
 
