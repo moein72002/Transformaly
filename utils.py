@@ -531,27 +531,28 @@ def train(model, best_model, args, dataloaders,
                                             outputs_recon_scores[:, layer_ind])
                     print(f'layer AUROC score: {rot_auc}')
                     print("--------------------------------------------------------")
-            if args['test_every_epoch']:
-                if args['use_imagenet']:
-                    MODEL_NAME = 'B_16_imagenet1k'
-                else:
-                    MODEL_NAME = 'B_16'
 
-                pretrained_model_for_test = ViT(MODEL_NAME, pretrained=True)
-                pretrained_model_for_test.fc = Identity()
-                pretrained_model_for_test.eval()
+        if args['test_every_epoch']:
+            if args['use_imagenet']:
+                MODEL_NAME = 'B_16_imagenet1k'
+            else:
+                MODEL_NAME = 'B_16'
 
-                extract_fetures(base_path=BASE_PATH,
-                                data_path=args['data_path'],
-                                datasets=[args['dataset']],
-                                model=pretrained_model_for_test,
-                                logging=logging,
-                                calculate_features=True,
-                                unimodal_vals=[args['unimodal']],
-                                manual_class_num_range=[_class],
-                                output_train_features=True,
-                                output_test_features=True,
-                                use_imagenet=args['use_imagenet'])
+            pretrained_model_for_test = ViT(MODEL_NAME, pretrained=True)
+            pretrained_model_for_test.fc = Identity()
+            pretrained_model_for_test.eval()
+
+            extract_fetures(base_path=BASE_PATH,
+                            data_path=args['data_path'],
+                            datasets=[args['dataset']],
+                            model=pretrained_model_for_test,
+                            logging=logging,
+                            calculate_features=True,
+                            unimodal_vals=[args['unimodal']],
+                            manual_class_num_range=[_class],
+                            output_train_features=True,
+                            output_test_features=True,
+                            use_imagenet=args['use_imagenet'])
 
             model = model.train()
 
