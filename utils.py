@@ -134,6 +134,7 @@ def extract_fetures(base_path,
             else:
                 _classes = range(number_of_classes)
 
+        print(f"_classes: {_classes}")
         for _class in _classes:
 
             # config
