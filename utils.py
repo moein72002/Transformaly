@@ -139,7 +139,6 @@ def extract_fetures(base_path,
 
         if manual_class_num_range is not None:
             _classes = range(*manual_class_num_range)
-
         else:
             if dataset in ['wbc1', 'wbc2']:
                 _classes = [1]
@@ -562,6 +561,11 @@ def train(model, best_model, args, dataloaders,
             pretrained_model_for_test.fc = Identity()
             pretrained_model_for_test.eval()
 
+            if args['dataset'] in ['wbc1', 'wbc2']:
+                manual_class_num_range = None
+            else:
+                manual_class_num_range = [_class]
+
             extract_fetures(base_path=BASE_PATH,
                             data_path=args['data_path'],
                             datasets=[args['dataset']],
@@ -569,7 +573,7 @@ def train(model, best_model, args, dataloaders,
                             logging=logging,
                             calculate_features=True,
                             unimodal_vals=[args['unimodal']],
-                            manual_class_num_range=[_class],
+                            manual_class_num_range=manual_class_num_range,
                             output_train_features=True,
                             output_test_features=True,
                             use_imagenet=args['use_imagenet'])

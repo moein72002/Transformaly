@@ -237,7 +237,7 @@ if __name__ == '__main__':
                         logging=logging,
                         calculate_features=True,
                         unimodal_vals=[args['unimodal']],
-                        manual_class_num_range=None,
+                        manual_class_num_range=manual_class_num_range,
                         output_train_features=True,
                         output_test_features=True,
                         use_imagenet=args['use_imagenet'])
