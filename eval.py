@@ -169,7 +169,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
 
         # load best instance
         # Build model
-        if not os.path.exists(join(base_feature_path, 'features_distances',
+        if args["test_every_epoch"] or not os.path.exists(join(base_feature_path, 'features_distances',
                                    FINETUNED_PREDICTION_FILE_NAME)):
 
             print_and_add_to_log("Load Model", logging)
