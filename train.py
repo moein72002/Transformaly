@@ -32,6 +32,8 @@ if __name__ == '__main__':
                         help='Test every epoch or not')
     parser.add_argument('--plot_every_layer_summarization', default=False, action='store_true',
                         help='plot the per layer AUROC')
+    parser.add_argument('--whitening_threshold_for_eval', default=0.9, type=float,
+                        help='Explained variance of the whitening process for evaluation')
     parser_args = parser.parse_args()
     args = vars(parser_args)
 
@@ -189,7 +191,8 @@ if __name__ == '__main__':
                                                 anomaly_classes=anomaly_classes,
                                                 dataset=args['dataset'],
                                                 _class=_class,
-                                                BASE_PATH=BASE_PATH
+                                                BASE_PATH=BASE_PATH,
+                                                eval_classes=_classes
                                                 )
 
         training_losses = cur_acc_loss['training_losses']

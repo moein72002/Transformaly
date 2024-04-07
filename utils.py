@@ -27,7 +27,7 @@ from torchvision.datasets import CIFAR10, CIFAR100, FashionMNIST, ImageFolder
 from torchvision.transforms import Compose
 from datasets.wbc1 import get_wbc1_train_and_test_dataset_for_anomaly_detection, get_wbc1_id_test_dataset, get_just_wbc1_test_dataset_for_anomaly_detection
 from datasets.wbc2 import get_wbc2_train_and_test_dataset_for_anomaly_detection, get_wbc2_id_test_dataset, get_just_wbc2_test_dataset_for_anomaly_detection
-
+from eval import evaluate_method
 
 
 class DiorDataset(Dataset):
@@ -381,7 +381,7 @@ def forward_one_epoch(loader,
 def train(model, best_model, args, dataloaders,
           model_checkpoint_path,
           output_path, device='cuda',
-          seed=42, anomaly_classes=None, dataset=None, _class=None, BASE_PATH=None):
+          seed=42, anomaly_classes=None, dataset=None, _class=None, BASE_PATH=None, eval_classes=None):
     torch.manual_seed(0)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
@@ -561,6 +561,16 @@ def train(model, best_model, args, dataloaders,
                             output_train_features=True,
                             output_test_features=True,
                             use_imagenet=args['use_imagenet'])
+
+            eval_args = {
+                "dataset": args["dataset"],
+                "data_path": args["data_path"],
+                "whitening_threshold": args["whitening_threshold_for_eval"],
+                "unimodal": args["unimodal"],
+                "batch_size": args["batch_size"]
+            }
+            eval_BASE_PATH = 'experiments'
+            evaluate_method(args=eval_args, BASE_PATH=eval_BASE_PATH, _classes=eval_classes)
 
     progress_bar_str = 'Test: repeat %d -- Mean Loss: %.3f | Last Loss: %.3f'
 

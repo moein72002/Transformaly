@@ -19,7 +19,7 @@ from datasets.wbc1 import get_wbc1_train_and_test_dataset_for_anomaly_detection,
 from datasets.wbc2 import get_wbc2_train_and_test_dataset_for_anomaly_detection, get_just_wbc2_test_dataset_for_anomaly_detection
 
 
-def evaluate_method():
+def evaluate_method(args=None, BASE_PATH=None, _classes=None):
     logging.basicConfig(
         filename=join(BASE_PATH,
                       f'{"unimodal" if args["unimodal"] else "multimodal"}/{args["dataset"]}',
@@ -354,4 +354,4 @@ if __name__ == '__main__':
         os.makedirs(join(BASE_PATH,
                          f'{"unimodal" if args["unimodal"] else "multimodal"}/{args["dataset"]}'))
 
-    evaluate_method()
+    evaluate_method(args=args, BASE_PATH=BASE_PATH, _classes=_classes)
