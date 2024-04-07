@@ -19,49 +19,11 @@ from datasets.wbc1 import get_wbc1_train_and_test_dataset_for_anomaly_detection,
 from datasets.wbc2 import get_wbc2_train_and_test_dataset_for_anomaly_detection, get_just_wbc2_test_dataset_for_anomaly_detection
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--dataset', default='cifar10')
-    parser.add_argument('--data_path', default='./data/', help='Path to the dataset')
-    parser.add_argument('--whitening_threshold', default=0.9, type=float,
-                        help='Explained variance of the whitening process')
-    parser.add_argument('--unimodal', default=False, action='store_true',
-                        help='Use the unimodal settings')
-    parser.add_argument('--batch_size', type=int, default=6, help='Training batch size')
-    parser_args = parser.parse_args()
-    args = vars(parser_args)
-
-    args['use_layer_outputs'] = list(range(2, 12))
-    args['use_imagenet'] = True
-    BASE_PATH = 'experiments'
-
-    if args['dataset'] in ['wbc1', 'wbc2']:
-        _classes = [1]
-    elif args['dataset'] == 'cifar10':
-        _classes = range(10)
-    elif args['dataset'] == 'fmnist':
-        _classes = range(10)
-    elif args['dataset'] == 'cifar100':
-        _classes = range(20)
-    elif args['dataset'] == 'cats_vs_dogs':
-        _classes = range(2)
-    elif args['dataset'] == 'dior':
-        _classes = range(19)
-    else:
-        raise ValueError(f"Does not support the {args['dataset']} dataset")
-
-    # create the relevant directories
-    if not os.path.exists(
-            join(BASE_PATH,
-                 f'{"unimodal" if args["unimodal"] else "multimodal"}/{args["dataset"]}')):
-        os.makedirs(join(BASE_PATH,
-                         f'{"unimodal" if args["unimodal"] else "multimodal"}/{args["dataset"]}'))
-
+def evaluate_method():
     logging.basicConfig(
         filename=join(BASE_PATH,
                       f'{"unimodal" if args["unimodal"] else "multimodal"}/{args["dataset"]}',
                       f'Eval_{args["dataset"]}_Transformaly_outputs.log'), level=logging.DEBUG)
-
     print_and_add_to_log("========================================================",
                          logging)
     print_and_add_to_log("Args are:", logging)
@@ -75,7 +37,6 @@ if __name__ == '__main__':
                'just_test_all_layers_finetuned_AUROC_scores': [],
                'pretrained_and_finetuned_AUROC_scores': [],
                'just_test_pretrained_and_finetuned_AUROC_scores': []}
-
     for _class in _classes:
         print_and_add_to_log("===================================", logging)
         print_and_add_to_log(f"Class is : {_class}", logging)
@@ -127,12 +88,11 @@ if __name__ == '__main__':
                                                   shuffle=False)
         if args['dataset'] in ['wbc1', 'wbc2']:
             just_test_loader = torch.utils.data.DataLoader(just_testset,
-                                                      batch_size=args['batch_size'],
-                                                      shuffle=False)
+                                                           batch_size=args['batch_size'],
+                                                           shuffle=False)
         train_loader = torch.utils.data.DataLoader(trainset,
                                                    batch_size=args['batch_size'],
                                                    shuffle=False)
-
 
         print_and_add_to_log("=====================================================",
                              logging)
@@ -233,7 +193,7 @@ if __name__ == '__main__':
                                                              loader=test_loader)
             if args['dataset'] in ['wbc1', 'wbc2']:
                 just_test_finetuned_features = get_finetuned_features(model=model,
-                                                                 loader=just_test_loader)
+                                                                      loader=just_test_loader)
 
             if not os.path.exists(join(base_feature_path, 'features_distances')):
                 os.makedirs(join(base_feature_path, 'features_distances'))
@@ -257,7 +217,7 @@ if __name__ == '__main__':
             if just_test_finetuned_features.shape[0] == 1:
                 just_test_finetuned_features = just_test_finetuned_features[0]
 
-        #TODO: check below
+        # TODO: check below
         if args["use_layer_outputs"] is None:
             assert test_finetuned_features.shape[1] == just_test_finetuned_features.shape[1]
             args["use_layer_outputs"] = list(range(test_finetuned_features.shape[1]))
@@ -336,7 +296,7 @@ if __name__ == '__main__':
                                                      finetuned_and_pretrained_samples_likelihood)
         if args['dataset'] in ['wbc1', 'wbc2']:
             just_test_finetuned_and_pretrained_auc = roc_auc_score(just_test_anomaly_targets,
-                                                         just_test_finetuned_and_pretrained_samples_likelihood)
+                                                                   just_test_finetuned_and_pretrained_samples_likelihood)
         print_and_add_to_log(
             f"The bgm and output prediction prediciton AUROC is: {finetuned_and_pretrained_auc}",
             logging)
@@ -348,10 +308,50 @@ if __name__ == '__main__':
         results['pretrained_and_finetuned_AUROC_scores'].append(finetuned_and_pretrained_auc)
         if args['dataset'] in ['wbc1', 'wbc2']:
             results['just_test_pretrained_and_finetuned_AUROC_scores'].append(just_test_finetuned_and_pretrained_auc)
-
     results_pd = pd.DataFrame.from_dict(results)
     results_dict_path = join(BASE_PATH,
                              f'summarize_results/{args["dataset"]}/{args["dataset"]}_results.csv')
     if not os.path.exists(join(BASE_PATH, f'summarize_results/{args["dataset"]}')):
         os.makedirs(join(BASE_PATH, f'summarize_results/{args["dataset"]}'))
     results_pd.to_csv(results_dict_path)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='')
+    parser.add_argument('--dataset', default='cifar10')
+    parser.add_argument('--data_path', default='./data/', help='Path to the dataset')
+    parser.add_argument('--whitening_threshold', default=0.9, type=float,
+                        help='Explained variance of the whitening process')
+    parser.add_argument('--unimodal', default=False, action='store_true',
+                        help='Use the unimodal settings')
+    parser.add_argument('--batch_size', type=int, default=6, help='Training batch size')
+    parser_args = parser.parse_args()
+    args = vars(parser_args)
+
+    args['use_layer_outputs'] = list(range(2, 12))
+    args['use_imagenet'] = True
+    BASE_PATH = 'experiments'
+
+    if args['dataset'] in ['wbc1', 'wbc2']:
+        _classes = [1]
+    elif args['dataset'] == 'cifar10':
+        _classes = range(10)
+    elif args['dataset'] == 'fmnist':
+        _classes = range(10)
+    elif args['dataset'] == 'cifar100':
+        _classes = range(20)
+    elif args['dataset'] == 'cats_vs_dogs':
+        _classes = range(2)
+    elif args['dataset'] == 'dior':
+        _classes = range(19)
+    else:
+        raise ValueError(f"Does not support the {args['dataset']} dataset")
+
+    # create the relevant directories
+    if not os.path.exists(
+            join(BASE_PATH,
+                 f'{"unimodal" if args["unimodal"] else "multimodal"}/{args["dataset"]}')):
+        os.makedirs(join(BASE_PATH,
+                         f'{"unimodal" if args["unimodal"] else "multimodal"}/{args["dataset"]}'))
+
+    evaluate_method()
