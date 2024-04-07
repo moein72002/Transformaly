@@ -58,4 +58,5 @@ if __name__ == '__main__':
         os.makedirs(join(BASE_PATH,
                          f'{"unimodal" if args["unimodal"] else "multimodal"}/{args["dataset"]}'))
 
+    args["test_every_epoch"] = True
     evaluate_method(args=args, BASE_PATH=BASE_PATH, _classes=_classes)
