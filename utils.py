@@ -15,7 +15,6 @@ import pickle
 import numpy as np
 from tqdm import tqdm
 from PIL import Image
-from sklearn.metrics import roc_auc_score
 import faiss
 import matplotlib.pyplot as plt
 import torch
@@ -970,16 +969,14 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
 
         if args['dataset'] == 'wbc1':
             trainset, testset = get_wbc1_train_and_test_dataset_for_anomaly_detection()
-            anomaly_targets = [0 if label == testset.normal_class_label else 1 for label in testset.targets]
+            anomaly_targets = [1 if label in anomaly_classes else 0 for label in testset.targets]
             just_testset = get_just_wbc2_test_dataset_for_anomaly_detection()
-            just_test_anomaly_targets = [0 if label == just_testset.normal_class_label else 1 for label in
-                                         just_testset.targets]
+            just_test_anomaly_targets = [1 if label in anomaly_classes else 0 for label in just_testset.targets]
         elif args['dataset'] == 'wbc2':
             trainset, testset = get_wbc2_train_and_test_dataset_for_anomaly_detection()
-            anomaly_targets = [0 if label == testset.normal_class_label else 1 for label in testset.targets]
+            anomaly_targets = [1 if label in anomaly_classes else 0 for label in testset.targets]
             just_testset = get_just_wbc1_test_dataset_for_anomaly_detection()
-            just_test_anomaly_targets = [0 if label == just_testset.normal_class_label else 1 for label in
-                                         just_testset.targets]
+            just_test_anomaly_targets = [1 if label in anomaly_classes else 0 for label in just_testset.targets]
         else:
             trainset, testset = get_datasets_for_ViT(dataset=args['dataset'],
                                                      data_path=args['data_path'],
@@ -988,7 +985,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
                                                      normal_test_sample_only=False,
                                                      use_imagenet=args['use_imagenet'],
                                                      )
-            anomaly_targets = [0 if i in anomaly_classes else 1 for i in testset.targets]
+            anomaly_targets = [1 if i in anomaly_classes else 0 for i in testset.targets]
 
         test_loader = torch.utils.data.DataLoader(testset,
                                                   batch_size=args['batch_size'],
@@ -1054,12 +1051,12 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
             just_test_pretrained_samples_likelihood = dens_model.score_samples(just_test_features)
         print_and_add_to_log("----------------------", logging)
 
-        pretrained_auc = roc_auc_score(anomaly_targets, test_pretrained_samples_likelihood)
+        pretrained_auc = roc_auc_score(anomaly_targets, -test_pretrained_samples_likelihood)
 
         eval_using_knn_distances = knn_score(train_features, test_features, n_neighbours=2)
         eval_using_knn_auc = roc_auc_score(anomaly_targets, eval_using_knn_distances)
         if args['dataset'] in ['wbc1', 'wbc2']:
-            just_test_pretrained_auc = roc_auc_score(just_test_anomaly_targets, just_test_pretrained_samples_likelihood)
+            just_test_pretrained_auc = roc_auc_score(just_test_anomaly_targets, -just_test_pretrained_samples_likelihood)
             just_test_eval_using_knn_distances = knn_score(train_features, just_test_features, n_neighbours=2)
             just_test_eval_using_knn_auc = roc_auc_score(just_test_anomaly_targets, just_test_eval_using_knn_distances)
 
@@ -1184,12 +1181,12 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
         # train_finetuned_samples_likelihood = gmm.score_samples(train_finetuned_features)
         # max_train_finetuned_features = np.max(np.abs(train_finetuned_samples_likelihood), axis=0)
 
-        test_finetuned_auc = roc_auc_score(anomaly_targets, test_finetuned_samples_likelihood)
+        test_finetuned_auc = roc_auc_score(anomaly_targets, -test_finetuned_samples_likelihood)
         print_and_add_to_log(f"All Block outputs prediciton AUROC score is: {test_finetuned_auc}",
                              logging)
 
         if args['dataset'] in ['wbc1', 'wbc2']:
-            just_test_finetuned_auc = roc_auc_score(just_test_anomaly_targets, just_test_finetuned_samples_likelihood)
+            just_test_finetuned_auc = roc_auc_score(just_test_anomaly_targets, -just_test_finetuned_samples_likelihood)
             print_and_add_to_log(f"Just test all Block outputs prediciton AUROC score is: {just_test_finetuned_auc}",
                                  logging)
         results['all_layers_finetuned_AUROC_scores'].append(test_finetuned_auc)
@@ -1206,11 +1203,10 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
                 just_test_finetuned_samples_likelihood[i] + just_test_pretrained_samples_likelihood[i] for i in
                 range(len(just_test_pretrained_samples_likelihood))]
 
-        finetuned_and_pretrained_auc = roc_auc_score(anomaly_targets,
-                                                     finetuned_and_pretrained_samples_likelihood)
+        finetuned_and_pretrained_auc = roc_auc_score(anomaly_targets, -finetuned_and_pretrained_samples_likelihood)
         if args['dataset'] in ['wbc1', 'wbc2']:
             just_test_finetuned_and_pretrained_auc = roc_auc_score(just_test_anomaly_targets,
-                                                                   just_test_finetuned_and_pretrained_samples_likelihood)
+                                                                   -just_test_finetuned_and_pretrained_samples_likelihood)
         print_and_add_to_log(
             f"The bgm and output prediction prediciton AUROC is: {finetuned_and_pretrained_auc}",
             logging)
