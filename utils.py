@@ -37,8 +37,6 @@ from sklearn.metrics import roc_auc_score
 from sklearn.decomposition import PCA
 from sklearn import mixture
 import torch.nn
-from utils import print_and_add_to_log, get_datasets_for_ViT, \
-    Identity, get_finetuned_features, knn_score
 from pytorch_pretrained_vit.model import AnomalyViT
 from datasets.wbc1 import get_wbc1_train_and_test_dataset_for_anomaly_detection, get_just_wbc1_test_dataset_for_anomaly_detection
 from datasets.wbc2 import get_wbc2_train_and_test_dataset_for_anomaly_detection, get_just_wbc2_test_dataset_for_anomaly_detection
