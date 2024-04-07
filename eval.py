@@ -13,7 +13,7 @@ from sklearn.decomposition import PCA
 from sklearn import mixture
 import torch.nn
 from utils import print_and_add_to_log, get_datasets_for_ViT, \
-    Identity, get_finetuned_features
+    Identity, get_finetuned_features, knn_score
 from pytorch_pretrained_vit.model import AnomalyViT
 from datasets.wbc1 import get_wbc1_train_and_test_dataset_for_anomaly_detection, get_just_wbc1_test_dataset_for_anomaly_detection
 from datasets.wbc2 import get_wbc2_train_and_test_dataset_for_anomaly_detection, get_just_wbc2_test_dataset_for_anomaly_detection
@@ -33,6 +33,8 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
     results = {'class': [],
                'pretrained_AUROC_scores': [],
                'just_test_pretrained_AUROC_scores': [],
+               'eval_using_knn_pretrained_AUROC_scores': [],
+               'just_test_using_knn_pretrained_AUROC_scores': [],
                'all_layers_finetuned_AUROC_scores': [],
                'just_test_all_layers_finetuned_AUROC_scores': [],
                'pretrained_and_finetuned_AUROC_scores': [],
@@ -148,14 +150,19 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
         print_and_add_to_log("----------------------", logging)
 
         pretrained_auc = roc_auc_score(anomaly_targets, test_pretrained_samples_likelihood)
+
+        eval_using_knn_distances = knn_score(train_features, test_features, n_neighbours=2)
         if args['dataset'] in ['wbc1', 'wbc2']:
             just_test_pretrained_auc = roc_auc_score(just_test_anomaly_targets, just_test_pretrained_samples_likelihood)
+            just_test_eval_using_knn_distances = knn_score(train_features, just_test_features, n_neighbours=2)
 
         print_and_add_to_log(f"Pretrained AUROC score is: {pretrained_auc}", logging)
         print_and_add_to_log("----------------------", logging)
         results['pretrained_AUROC_scores'].append(pretrained_auc)
+        results['eval_using_knn_pretrained_AUROC_scores'].append(eval_using_knn_distances)
         if args['dataset'] in ['wbc1', 'wbc2']:
             results['just_test_pretrained_AUROC_scores'].append(just_test_pretrained_auc)
+            results['just_test_using_knn_pretrained_AUROC_scores'].append(just_test_eval_using_knn_distances)
 
         # get finetuned prediction head scores
         FINETUNED_PREDICTION_FILE_NAME = 'full_test_finetuned_scores.npy'
