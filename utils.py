@@ -1057,17 +1057,19 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
         pretrained_auc = roc_auc_score(anomaly_targets, test_pretrained_samples_likelihood)
 
         eval_using_knn_distances = knn_score(train_features, test_features, n_neighbours=2)
+        eval_using_knn_auc = roc_auc_score(anomaly_targets, eval_using_knn_distances)
         if args['dataset'] in ['wbc1', 'wbc2']:
             just_test_pretrained_auc = roc_auc_score(just_test_anomaly_targets, just_test_pretrained_samples_likelihood)
             just_test_eval_using_knn_distances = knn_score(train_features, just_test_features, n_neighbours=2)
+            just_test_eval_using_knn_auc = roc_auc_score(just_test_anomaly_targets, just_test_eval_using_knn_distances)
 
         print_and_add_to_log(f"Pretrained AUROC score is: {pretrained_auc}", logging)
         print_and_add_to_log("----------------------", logging)
         results['pretrained_AUROC_scores'].append(pretrained_auc)
-        results['eval_using_knn_pretrained_AUROC_scores'].append(eval_using_knn_distances)
+        results['eval_using_knn_pretrained_AUROC_scores'].append(eval_using_knn_auc)
         if args['dataset'] in ['wbc1', 'wbc2']:
             results['just_test_pretrained_AUROC_scores'].append(just_test_pretrained_auc)
-            results['just_test_using_knn_pretrained_AUROC_scores'].append(just_test_eval_using_knn_distances)
+            results['just_test_using_knn_pretrained_AUROC_scores'].append(just_test_eval_using_knn_auc)
 
         # get finetuned prediction head scores
         FINETUNED_PREDICTION_FILE_NAME = 'full_test_finetuned_scores.npy'
