@@ -70,8 +70,11 @@ if __name__ == '__main__':
                          logging)
     results = {'class': [],
                'pretrained_AUROC_scores': [],
+               'just_test_pretrained_AUROC_scores': [],
                'all_layers_finetuned_AUROC_scores': [],
-               'pretrained_and_finetuned_AUROC_scores': []}
+               'just_test_all_layers_finetuned_AUROC_scores': [],
+               'pretrained_and_finetuned_AUROC_scores': [],
+               'just_test_pretrained_and_finetuned_AUROC_scores': []}
 
     for _class in _classes:
         print_and_add_to_log("===================================", logging)
@@ -191,6 +194,8 @@ if __name__ == '__main__':
         print_and_add_to_log(f"Pretrained AUROC score is: {pretrained_auc}", logging)
         print_and_add_to_log("----------------------", logging)
         results['pretrained_AUROC_scores'].append(pretrained_auc)
+        if args['dataset'] in ['wbc1', 'wbc2']:
+            results['just_test_pretrained_AUROC_scores'].append(just_test_pretrained_auc)
 
         # get finetuned prediction head scores
         FINETUNED_PREDICTION_FILE_NAME = 'full_test_finetuned_scores.npy'
