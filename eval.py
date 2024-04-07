@@ -223,7 +223,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
             args["use_layer_outputs"] = list(range(test_finetuned_features.shape[1]))
 
         # TODO: delete file if you want to call eval multiple times, I can add boolean as method parameter
-        if not os.path.exists(join(base_feature_path,
+        if args["test_every_epoch"] or not os.path.exists(join(base_feature_path,
                                    'features_distances', 'train_finetuned_features.npy')):
             print_and_add_to_log("Load Model", logging)
             model_checkpoint_path = join(model_path, 'best_full_finetuned_model_state_dict.pkl')

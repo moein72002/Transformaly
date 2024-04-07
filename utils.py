@@ -567,7 +567,8 @@ def train(model, best_model, args, dataloaders,
                 "data_path": args["data_path"],
                 "whitening_threshold": args["whitening_threshold_for_eval"],
                 "unimodal": args["unimodal"],
-                "batch_size": args["batch_size"]
+                "batch_size": args["batch_size"],
+                "test_every_epoch": args["test_every_epoch"]
             }
             eval_BASE_PATH = 'experiments'
             evaluate_method(args=eval_args, BASE_PATH=eval_BASE_PATH, _classes=eval_classes)
