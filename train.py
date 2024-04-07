@@ -222,6 +222,11 @@ if __name__ == '__main__':
         model.fc = Identity()
         model.eval()
 
+        if args['dataset'] in ['wbc1', 'wbc2']:
+            manual_class_num_range = None
+        else:
+            manual_class_num_range = [_class]
+
         extract_fetures(base_path=BASE_PATH,
                         data_path=args['data_path'],
                         datasets=[args['dataset']],
@@ -229,7 +234,7 @@ if __name__ == '__main__':
                         logging=logging,
                         calculate_features=True,
                         unimodal_vals=[args['unimodal']],
-                        manual_class_num_range=[_class],
+                        manual_class_num_range=None,
                         output_train_features=True,
                         output_test_features=True,
                         use_imagenet=args['use_imagenet'])
