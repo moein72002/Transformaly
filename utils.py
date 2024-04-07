@@ -1221,6 +1221,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
         if args['dataset'] in ['wbc1', 'wbc2']:
             results['just_test_pretrained_and_finetuned_AUROC_scores'].append(just_test_finetuned_and_pretrained_auc)
     results_pd = pd.DataFrame.from_dict(results)
+    print(f"all_results: {results}")
     results_dict_path = join(BASE_PATH,
                              f'summarize_results/{args["dataset"]}/{args["dataset"]}_results.csv')
     if not os.path.exists(join(BASE_PATH, f'summarize_results/{args["dataset"]}')):
