@@ -13,13 +13,13 @@ from visualize.visualize_dataset import visualize_random_samples_from_clean_data
 from visualize.count_labels import count_unique_labels_of_dataset
 
 def prepare_brats2015_dataset_files():
-    labels = pd.read_csv('brats/Brain Tumor.csv')
+    labels = pd.read_csv('./brats/Brain Tumor.csv')
     labels = labels[['Image', 'Class']]
     labels.tail() # 0: no tumor, 1: tumor
 
     labels.head()
 
-    brats_path = 'brats/Brain Tumor/Brain Tumor'
+    brats_path = './brats/Brain Tumor/Brain Tumor'
     lbl = dict(zip(labels.Image, labels.Class))
     len(lbl), len(labels)
 
@@ -30,21 +30,21 @@ def prepare_brats2015_dataset_files():
 
     labels['Class'].value_counts()
 
-    Path('brats/dataset/test/anomaly').mkdir(parents=True, exist_ok=True)
-    Path('brats/dataset/test/normal').mkdir(parents=True, exist_ok=True)
-    Path('brats/dataset/train/normal').mkdir(parents=True, exist_ok=True)
+    Path('./brats/dataset/test/anomaly').mkdir(parents=True, exist_ok=True)
+    Path('./brats/dataset/test/normal').mkdir(parents=True, exist_ok=True)
+    Path('./brats/dataset/train/normal').mkdir(parents=True, exist_ok=True)
 
-    flist = [f for f in os.listdir('brats/dataset/test/anomaly')]
+    flist = [f for f in os.listdir('./brats/dataset/test/anomaly')]
     for f in flist:
-        os.remove(os.path.join('brats/dataset/test/anomaly', f))
+        os.remove(os.path.join('./brats/dataset/test/anomaly', f))
 
-    flist = [f for f in os.listdir('brats/dataset/test/normal')]
+    flist = [f for f in os.listdir('./brats/dataset/test/normal')]
     for f in flist:
-        os.remove(os.path.join('brats/dataset/test/normal', f))
+        os.remove(os.path.join('./brats/dataset/test/normal', f))
 
-    flist = [f for f in os.listdir('brats/dataset/train/normal')]
+    flist = [f for f in os.listdir('./brats/dataset/train/normal')]
     for f in flist:
-        os.remove(os.path.join('brats/dataset/train/normal', f))
+        os.remove(os.path.join('./brats/dataset/train/normal', f))
 
     ratio = 0.7
     random.shuffle(normalbrats)
@@ -52,13 +52,13 @@ def prepare_brats2015_dataset_files():
 
     for f in anomalybrats:
         ext = f'{f}.jpg'
-        shutil.copy2(os.path.join(brats_path, ext), 'brats/dataset/test/anomaly')
+        shutil.copy2(os.path.join(brats_path, ext), './brats/dataset/test/anomaly')
     for f in normalbrats[:bratsep]:
         ext = f'{f}.jpg'
-        shutil.copy2(os.path.join(brats_path, ext), 'brats/dataset/train/normal')
+        shutil.copy2(os.path.join(brats_path, ext), './brats/dataset/train/normal')
     for f in normalbrats[bratsep:]:
         ext = f'{f}.jpg'
-        shutil.copy2(os.path.join(brats_path, ext), 'brats/dataset/test/normal')
+        shutil.copy2(os.path.join(brats_path, ext), './brats/dataset/test/normal')
 
 class Brats2015_Dataset(Dataset):
     def __init__(self, image_path, labels, count=-1):

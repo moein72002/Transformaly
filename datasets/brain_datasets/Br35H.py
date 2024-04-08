@@ -20,8 +20,8 @@ from visualize.visualize_dataset import visualize_random_samples_from_clean_data
 from visualize.count_labels import count_unique_labels_of_dataset
 
 def prepare_br35h_dataset_files():
-    normal_path35 = '/kaggle/input/brain-tumor-detection/no'
-    anomaly_path35 = '/kaggle/input/brain-tumor-detection/yes'
+    normal_path35 = './Br35H/no'
+    anomaly_path35 = './Br35H/yes'
 
     print(f"len(os.listdir(normal_path35)): {len(os.listdir(normal_path35))}")
     print(f"len(os.listdir(anomaly_path35)): {len(os.listdir(anomaly_path35))}")
