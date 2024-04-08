@@ -1237,9 +1237,9 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
             test_finetuned_samples_likelihood[i] + test_pretrained_samples_likelihood[i] for i in
             range(len(test_pretrained_samples_likelihood))])
         if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
-            just_test_finetuned_and_pretrained_samples_likelihood = [
+            just_test_finetuned_and_pretrained_samples_likelihood = np.array([
                 just_test_finetuned_samples_likelihood[i] + just_test_pretrained_samples_likelihood[i] for i in
-                range(len(just_test_pretrained_samples_likelihood))]
+                range(len(just_test_pretrained_samples_likelihood))])
 
         finetuned_and_pretrained_auc = roc_auc_score(anomaly_targets, -finetuned_and_pretrained_samples_likelihood)
         if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
