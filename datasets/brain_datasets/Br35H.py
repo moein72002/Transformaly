@@ -61,7 +61,7 @@ def prepare_br35h_dataset_files():
 
     len(os.listdir('./Br35H/dataset/test/normal')), len(os.listdir('./Br35H/dataset/train/normal'))
 
-class Brain_MRI(Dataset):
+class Br35H_Dataset(Dataset):
     def __init__(self, image_path, labels, count=-1):
         prepare_br35h_dataset_files()
 
@@ -103,7 +103,7 @@ def get_br35h_trainset():
     train_label = [0]*len(train_normal_path)
     print(f"len(train_normal_path): {len(train_normal_path)}")
 
-    br35h_trainset = Brain_MRI(image_path=train_normal_path, labels=train_label)
+    br35h_trainset = Br35H_Dataset(image_path=train_normal_path, labels=train_label)
     print("train_set shapes: ", br35h_trainset[0][0].shape)
 
     count_unique_labels_of_dataset(br35h_trainset, "br35h_trainset")
@@ -120,7 +120,7 @@ def get_br35h_test_set():
     print(f"len(test_label): {len(test_label)}")
     print(f"len(test_path): {len(test_path)}")
 
-    br35h_testset = Brain_MRI(image_path=test_path, labels=test_label)
+    br35h_testset = Br35H_Dataset(image_path=test_path, labels=test_label)
     print("test_set shapes: ", br35h_testset[0][0].shape)
 
     count_unique_labels_of_dataset(br35h_testset, "br35h_testset")
@@ -136,7 +136,7 @@ def get_br35h_test_set_id():
     print(f"len(test_label): {len(test_label)}")
     print(f"len(test_path): {len(test_path)}")
 
-    br35h_testset_id = Brain_MRI(image_path=test_path, labels=test_label)
+    br35h_testset_id = Br35H_Dataset(image_path=test_path, labels=test_label)
     print("test_set shapes: ", br35h_testset_id[0][0].shape)
 
     count_unique_labels_of_dataset(br35h_testset_id, "br35h_testset_id")
@@ -152,7 +152,7 @@ def get_br35h_test_set_ood():
     print(f"len(test_label): {len(test_label)}")
     print(f"len(test_path): {len(test_path)}")
 
-    br35h_testset_ood = Brain_MRI(image_path=test_path, labels=test_label)
+    br35h_testset_ood = Br35H_Dataset(image_path=test_path, labels=test_label)
     print("test_set shapes: ", br35h_testset_ood[0][0].shape)
 
     count_unique_labels_of_dataset(br35h_testset_ood, "br35h_testset_ood")
@@ -173,7 +173,7 @@ def get_br35h_just_test():
     print(f"len(just_test_br35h_path): {len(just_test_br35h_path)}")
     print(f"len(just_test_br35h_label): {len(just_test_br35h_label)}")
 
-    just_test_br35h = Brain_MRI(image_path=just_test_br35h_path, labels=just_test_br35h_label)
+    just_test_br35h = Br35H_Dataset(image_path=just_test_br35h_path, labels=just_test_br35h_label)
     print("just_test_br35h shapes: ", just_test_br35h[0][0].shape)
 
     count_unique_labels_of_dataset(just_test_br35h, "just_test_br35h")
