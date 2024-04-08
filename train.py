@@ -14,6 +14,8 @@ from os.path import join
 from pytorch_pretrained_vit.model import AnomalyViT, ViT
 from datasets.wbc1 import get_wbc1_train_and_test_dataset_for_anomaly_detection, get_wbc1_id_test_dataset, get_wbc1_ood_test_dataset, get_just_wbc1_test_dataset_for_anomaly_detection
 from datasets.wbc2 import get_wbc2_train_and_test_dataset_for_anomaly_detection, get_wbc2_id_test_dataset, get_wbc2_ood_test_dataset, get_just_wbc2_test_dataset_for_anomaly_detection
+from datasets.brain_datasets.Br35H import get_br35h_trainset, get_br35h_test_set_id, get_br35h_test_set_ood, get_br35h_just_test
+from datasets.brain_datasets.Brats2015 import get_brats_trainset, get_brats_testset_id, get_brats_testset_ood, get_brats_just_test
 
 if __name__ == '__main__':
 
@@ -42,7 +44,9 @@ if __name__ == '__main__':
     args['use_imagenet'] = True
     BASE_PATH = 'experiments'
 
-    if args['dataset'] in ['wbc1', 'wbc2']:
+    if args['dataset'] in ['br35h', 'brats2015']:
+        _classes = [0]
+    elif args['dataset'] in ['wbc1', 'wbc2']:
         _classes = [1]
     elif args['dataset'] == 'cifar10':
         _classes = range(10)
@@ -109,7 +113,17 @@ if __name__ == '__main__':
         print_and_add_to_log(
             "====================================================================",
             logging)
-        if args['dataset'] == 'wbc1':
+        if args['dataset'] == 'br35h':
+            trainset = get_br35h_trainset()
+            testset = get_br35h_test_set_id()
+            ood_test_set = get_br35h_test_set_ood()
+            just_testset = get_brats_just_test()
+        elif args['dataset'] == 'brats2015':
+            trainset = get_brats_trainset()
+            testset = get_brats_testset_id()
+            ood_test_set = get_brats_testset_ood()
+            just_testset = get_br35h_just_test()
+        elif args['dataset'] == 'wbc1':
             trainset, _ = get_wbc1_train_and_test_dataset_for_anomaly_detection()
             testset = get_wbc1_id_test_dataset()
             ood_test_set = get_wbc1_ood_test_dataset()
@@ -127,7 +141,7 @@ if __name__ == '__main__':
                                                      normal_test_sample_only=True,
                                                      use_imagenet=args['use_imagenet']
                                                      )
-        if not args['dataset'] in ['wbc1', 'wbc2']:
+        if not args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             _, ood_test_set = get_datasets_for_ViT(dataset=args['dataset'],
                                                    data_path=args['data_path'],
                                                    one_vs_rest=not args['unimodal'],
@@ -225,7 +239,7 @@ if __name__ == '__main__':
         model.fc = Identity()
         model.eval()
 
-        if args['dataset'] in ['wbc1', 'wbc2']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             manual_class_num_range = None
         else:
             manual_class_num_range = [_class]

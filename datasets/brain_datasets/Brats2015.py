@@ -157,7 +157,6 @@ def get_brats_just_test():
 
     just_test_path = normal_train_brats+test_path_brats
     just_test_label = normal_train_label_brats + test_label_brats
-    len(just_test_path), len(just_test_label)
 
     just_test_set_brats = Brats2015_Dataset(image_path=just_test_path, labels=just_test_label)
     print("just_test_set_brats shapes: ", just_test_set_brats[0][0].shape)

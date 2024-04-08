@@ -36,7 +36,9 @@ if __name__ == '__main__':
     args['use_imagenet'] = True
     BASE_PATH = 'experiments'
 
-    if args['dataset'] in ['wbc1', 'wbc2']:
+    if args['dataset'] in ['br35h', 'brats2015']:
+        _classes = [0]
+    elif args['dataset'] in ['wbc1', 'wbc2']:
         _classes = [1]
     elif args['dataset'] == 'cifar10':
         _classes = range(10)

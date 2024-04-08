@@ -39,6 +39,9 @@ import torch.nn
 from pytorch_pretrained_vit.model import AnomalyViT
 from datasets.wbc1 import get_wbc1_train_and_test_dataset_for_anomaly_detection, get_just_wbc1_test_dataset_for_anomaly_detection
 from datasets.wbc2 import get_wbc2_train_and_test_dataset_for_anomaly_detection, get_just_wbc2_test_dataset_for_anomaly_detection
+from datasets.brain_datasets.Br35H import get_br35h_trainset, get_br35h_test_set, get_br35h_just_test
+from datasets.brain_datasets.Brats2015 import get_brats_trainset, get_brats_testset, get_brats_just_test
+
 
 
 class DiorDataset(Dataset):
@@ -139,7 +142,9 @@ def extract_fetures(base_path,
         if manual_class_num_range is not None:
             _classes = range(*manual_class_num_range)
         else:
-            if dataset in ['wbc1', 'wbc2']:
+            if dataset in ['br35h', 'brats2015']:
+                _classes = [0]
+            elif dataset in ['wbc1', 'wbc2']:
                 _classes = [1]
             else:
                 _classes = range(number_of_classes)
@@ -157,7 +162,7 @@ def extract_fetures(base_path,
                 print_and_add_to_log(f"Class: {_class}", logging)
                 print_and_add_to_log(f"Unimodal setting: {unimodal}", logging)
 
-                assert dataset in ['wbc1', 'wbc2', 'cifar10', 'cifar100', 'fmnist', 'cats_vs_dogs',
+                assert dataset in ['br35h', 'brats2015', 'wbc1', 'wbc2', 'cifar10', 'cifar100', 'fmnist', 'cats_vs_dogs',
                                    'dior'], f"{dataset} not supported yet!"
                 if unimodal:
                     base_feature_path = join(base_path, f'unimodal/{dataset}/class_{str(_class)}')
@@ -216,7 +221,19 @@ def extract_fetures(base_path,
                 model.to('cuda')
 
                 # get dataset
-                if dataset == 'wbc1':
+                if dataset == 'br35h':
+                    trainset = get_br35h_trainset()
+                    testset = get_br35h_test_set()
+                    anomaly_targets = testset.labels
+                    just_testset = get_brats_just_test()
+                    just_test_anomaly_targets = just_testset.labels
+                elif dataset == 'brats2015':
+                    trainset = get_brats_trainset()
+                    testset = get_brats_testset()
+                    anomaly_targets = testset.labels
+                    just_testset = get_br35h_just_test()
+                    just_test_anomaly_targets = just_testset.labels
+                elif dataset == 'wbc1':
                     trainset, testset = get_wbc1_train_and_test_dataset_for_anomaly_detection()
                     anomaly_targets = [0 if label == testset.normal_class_label else 1 for label in testset.targets]
                     just_testset = get_just_wbc2_test_dataset_for_anomaly_detection()
@@ -239,7 +256,7 @@ def extract_fetures(base_path,
                 # Create datasetLoaders from trainset and testset
                 trainsetLoader = DataLoader(trainset, batch_size=BATCH_SIZE, shuffle=False)
                 testsetLoader = DataLoader(testset, batch_size=BATCH_SIZE, shuffle=False)
-                if dataset in ['wbc1', 'wbc2']:
+                if dataset in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
                     just_testsetLoader = DataLoader(just_testset, batch_size=BATCH_SIZE, shuffle=False)
 
 
@@ -265,7 +282,7 @@ def extract_fetures(base_path,
                                        'test_pretrained_ViT_features.npy'), 'wb') as f:
                             np.save(f, test_features)
 
-                        if dataset in ['wbc1', 'wbc2']:
+                        if dataset in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
                             just_test_features = get_features(model=model, data_loader=just_testsetLoader)
                             with open(join(extracted_features_path,
                                            'just_test_pretrained_ViT_features.npy'), 'wb') as f:
@@ -283,7 +300,7 @@ def extract_fetures(base_path,
                                        f'test_pretrained_ViT_features.npy'), 'rb') as f:
                             test_features = np.load(f)
 
-                        if dataset in ['wbc1', 'wbc2']:
+                        if dataset in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
                             with open(join(extracted_features_path,
                                            f'just_test_pretrained_ViT_features.npy'), 'rb') as f:
                                 just_test_features = np.load(f)
@@ -291,7 +308,7 @@ def extract_fetures(base_path,
                 if output_train_features and output_test_features:
                     print_and_add_to_log("Calculate KNN score", logging)
                     distances = knn_score(train_features, test_features, n_neighbours=2)
-                    if dataset in ['wbc1', 'wbc2']:
+                    if dataset in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
                         just_test_distances = knn_score(train_features, just_test_features, n_neighbours=2)
 
                     # Convert list to set to remove duplicates and count unique elements
@@ -301,7 +318,7 @@ def extract_fetures(base_path,
 
                     auc = roc_auc_score(anomaly_targets, distances)
                     print(f"train {dataset}, test {dataset} -> AUC: {auc}")
-                    if dataset in ['wbc1', 'wbc2']:
+                    if dataset in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
                         just_test_auc = roc_auc_score(just_test_anomaly_targets, just_test_distances)
                         just_test_dataset_name = "wbc2" if dataset == "wbc1" else "wbc1"
                         print(f"train {dataset}, test {just_test_dataset_name} -> AUC: {just_test_auc}")
@@ -507,7 +524,13 @@ def train(model, best_model, args, dataloaders,
             #     break
 
             if args['plot_every_layer_summarization']:
-                if dataset == 'wbc1':
+                if dataset == 'br35h':
+                    testset = get_br35h_test_set()
+                    anomaly_targets = testset.labels
+                elif dataset == 'brats2015':
+                    testset = get_brats_testset()
+                    anomaly_targets = testset.labels
+                elif dataset == 'wbc1':
                     _, testset = get_wbc1_train_and_test_dataset_for_anomaly_detection()
                     anomaly_targets = [0 if label == testset.normal_class_label else 1 for label in testset.targets]
                 elif dataset == 'wbc2':
@@ -560,7 +583,7 @@ def train(model, best_model, args, dataloaders,
             pretrained_model_for_test.fc = Identity()
             pretrained_model_for_test.eval()
 
-            if args['dataset'] in ['wbc1', 'wbc2']:
+            if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
                 manual_class_num_range = None
             else:
                 manual_class_num_range = [_class]
@@ -672,7 +695,10 @@ def get_transforms(dataset, use_imagenet):
 
 
 def get_number_of_classes(dataset):
-    if dataset in ['wbc1', 'wbc2']:
+    if dataset in ['br35h', 'brats2015']:
+        number_of_classes = 2
+
+    elif dataset in ['wbc1', 'wbc2']:
         number_of_classes = 4
 
     elif dataset == 'cifar10':
@@ -967,7 +993,19 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
 
         results['class'].append(args['_class'])
 
-        if args['dataset'] == 'wbc1':
+        if args['dataset'] == 'br35h':
+            trainset = get_br35h_trainset()
+            testset = get_br35h_test_set()
+            anomaly_targets = testset.labels
+            just_testset = get_brats_just_test()
+            just_test_anomaly_targets = just_testset.labels
+        elif args['dataset'] == 'brats2015':
+            trainset = get_brats_trainset()
+            testset = get_brats_testset()
+            anomaly_targets = testset.labels
+            just_testset = get_br35h_just_test()
+            just_test_anomaly_targets = just_testset.labels
+        elif args['dataset'] == 'wbc1':
             trainset, testset = get_wbc1_train_and_test_dataset_for_anomaly_detection()
             anomaly_targets = [0 if label == testset.normal_class_label else 1 for label in testset.targets]
             just_testset = get_just_wbc2_test_dataset_for_anomaly_detection()
@@ -990,7 +1028,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
         test_loader = torch.utils.data.DataLoader(testset,
                                                   batch_size=args['batch_size'],
                                                   shuffle=False)
-        if args['dataset'] in ['wbc1', 'wbc2']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             just_test_loader = torch.utils.data.DataLoader(just_testset,
                                                            batch_size=args['batch_size'],
                                                            shuffle=False)
@@ -1011,7 +1049,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
                        f'{args["dataset"]}/class_{args["_class"]}/extracted_features',
                        'test_pretrained_ViT_features.npy'), 'rb') as f:
             test_features = np.load(f)
-        if args['dataset'] in ['wbc1', 'wbc2']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             with open(join(BASE_PATH, f'{"unimodal" if args["unimodal"] else "multimodal"}',
                            f'{args["dataset"]}/class_{args["_class"]}/extracted_features',
                            'just_test_pretrained_ViT_features.npy'), 'rb') as f:
@@ -1036,7 +1074,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
         pca = PCA(n_components=n_components, svd_solver='full', whiten=True)
         train_features = np.ascontiguousarray(pca.fit_transform(train_features))
         test_features = np.ascontiguousarray(pca.transform(test_features))
-        if args['dataset'] in ['wbc1', 'wbc2']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             just_test_features = np.ascontiguousarray(pca.transform(just_test_features))
         print_and_add_to_log("Whitening ended", logging)
 
@@ -1047,7 +1085,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
                                              n_init=1)
         dens_model.fit(train_features)
         test_pretrained_samples_likelihood = dens_model.score_samples(test_features)
-        if args['dataset'] in ['wbc1', 'wbc2']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             just_test_pretrained_samples_likelihood = dens_model.score_samples(just_test_features)
         print_and_add_to_log("----------------------", logging)
 
@@ -1055,7 +1093,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
 
         eval_using_knn_distances = knn_score(train_features, test_features, n_neighbours=2)
         eval_using_knn_auc = roc_auc_score(anomaly_targets, eval_using_knn_distances)
-        if args['dataset'] in ['wbc1', 'wbc2']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             just_test_pretrained_auc = roc_auc_score(just_test_anomaly_targets, -just_test_pretrained_samples_likelihood)
             just_test_eval_using_knn_distances = knn_score(train_features, just_test_features, n_neighbours=2)
             just_test_eval_using_knn_auc = roc_auc_score(just_test_anomaly_targets, just_test_eval_using_knn_distances)
@@ -1064,13 +1102,13 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
         print_and_add_to_log("----------------------", logging)
         results['pretrained_AUROC_scores'].append(pretrained_auc)
         results['eval_using_knn_pretrained_AUROC_scores'].append(eval_using_knn_auc)
-        if args['dataset'] in ['wbc1', 'wbc2']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             results['just_test_pretrained_AUROC_scores'].append(just_test_pretrained_auc)
             results['just_test_using_knn_pretrained_AUROC_scores'].append(just_test_eval_using_knn_auc)
 
         # get finetuned prediction head scores
         FINETUNED_PREDICTION_FILE_NAME = 'full_test_finetuned_scores.npy'
-        if args['dataset'] in ['wbc1', 'wbc2']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             JUST_TEST_FINETUNED_PREDICTION_FILE_NAME = 'just_full_test_finetuned_scores.npy'
 
         if args['use_imagenet']:
@@ -1102,7 +1140,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
 
             test_finetuned_features = get_finetuned_features(model=model,
                                                              loader=test_loader)
-            if args['dataset'] in ['wbc1', 'wbc2']:
+            if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
                 just_test_finetuned_features = get_finetuned_features(model=model,
                                                                       loader=just_test_loader)
 
@@ -1110,21 +1148,21 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
                 os.makedirs(join(base_feature_path, 'features_distances'))
             np.save(join(base_feature_path, 'features_distances', FINETUNED_PREDICTION_FILE_NAME),
                     test_finetuned_features)
-            if args['dataset'] in ['wbc1', 'wbc2']:
+            if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
                 np.save(join(base_feature_path, 'features_distances', JUST_TEST_FINETUNED_PREDICTION_FILE_NAME),
                         just_test_finetuned_features)
 
         else:
             test_finetuned_features = np.load(
                 join(base_feature_path, 'features_distances', FINETUNED_PREDICTION_FILE_NAME))
-            if args['dataset'] in ['wbc1', 'wbc2']:
+            if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
                 just_test_finetuned_features = np.load(
                     join(base_feature_path, 'features_distances', JUST_TEST_FINETUNED_PREDICTION_FILE_NAME))
 
         if test_finetuned_features.shape[0] == 1:
             test_finetuned_features = test_finetuned_features[0]
 
-        if args['dataset'] in ['wbc1', 'wbc2']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             if just_test_finetuned_features.shape[0] == 1:
                 just_test_finetuned_features = just_test_finetuned_features[0]
 
@@ -1166,7 +1204,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
 
         train_finetuned_features = train_finetuned_features[:, args['use_layer_outputs']]
         test_finetuned_features = test_finetuned_features[:, args['use_layer_outputs']]
-        if args['dataset'] in ['wbc1', 'wbc2']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             just_test_finetuned_features = just_test_finetuned_features[:, args['use_layer_outputs']]
         gmm_scores = []
         train_gmm_scores = []
@@ -1176,7 +1214,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
                                       n_init=1)
         gmm.fit(train_finetuned_features)
         test_finetuned_samples_likelihood = gmm.score_samples(test_finetuned_features)
-        if args['dataset'] in ['wbc1', 'wbc2']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             just_test_finetuned_samples_likelihood = gmm.score_samples(just_test_finetuned_features)
         # train_finetuned_samples_likelihood = gmm.score_samples(train_finetuned_features)
         # max_train_finetuned_features = np.max(np.abs(train_finetuned_samples_likelihood), axis=0)
@@ -1185,12 +1223,12 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
         print_and_add_to_log(f"All Block outputs prediciton AUROC score is: {test_finetuned_auc}",
                              logging)
 
-        if args['dataset'] in ['wbc1', 'wbc2']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             just_test_finetuned_auc = roc_auc_score(just_test_anomaly_targets, -just_test_finetuned_samples_likelihood)
             print_and_add_to_log(f"Just test all Block outputs prediciton AUROC score is: {just_test_finetuned_auc}",
                                  logging)
         results['all_layers_finetuned_AUROC_scores'].append(test_finetuned_auc)
-        if args['dataset'] in ['wbc1', 'wbc2']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             results['just_test_all_layers_finetuned_AUROC_scores'].append(just_test_finetuned_auc)
 
         print_and_add_to_log("----------------------", logging)
@@ -1198,25 +1236,25 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
         finetuned_and_pretrained_samples_likelihood = [
             test_finetuned_samples_likelihood[i] + test_pretrained_samples_likelihood[i] for i in
             range(len(test_pretrained_samples_likelihood))]
-        if args['dataset'] in ['wbc1', 'wbc2']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             just_test_finetuned_and_pretrained_samples_likelihood = [
                 just_test_finetuned_samples_likelihood[i] + just_test_pretrained_samples_likelihood[i] for i in
                 range(len(just_test_pretrained_samples_likelihood))]
 
         finetuned_and_pretrained_auc = roc_auc_score(anomaly_targets, -finetuned_and_pretrained_samples_likelihood)
-        if args['dataset'] in ['wbc1', 'wbc2']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             just_test_finetuned_and_pretrained_auc = roc_auc_score(just_test_anomaly_targets,
                                                                    -just_test_finetuned_and_pretrained_samples_likelihood)
         print_and_add_to_log(
             f"The bgm and output prediction prediciton AUROC is: {finetuned_and_pretrained_auc}",
             logging)
-        if args['dataset'] in ['wbc1', 'wbc2']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             print_and_add_to_log(
                 f"Just test: the bgm and output prediction prediciton AUROC is: {just_test_finetuned_and_pretrained_auc}",
                 logging)
 
         results['pretrained_and_finetuned_AUROC_scores'].append(finetuned_and_pretrained_auc)
-        if args['dataset'] in ['wbc1', 'wbc2']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             results['just_test_pretrained_and_finetuned_AUROC_scores'].append(just_test_finetuned_and_pretrained_auc)
     results_pd = pd.DataFrame.from_dict(results)
     print(f"all_results: {results}")
