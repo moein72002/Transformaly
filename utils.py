@@ -1233,9 +1233,9 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
 
         print_and_add_to_log("----------------------", logging)
 
-        finetuned_and_pretrained_samples_likelihood = [
+        finetuned_and_pretrained_samples_likelihood = np.array([
             test_finetuned_samples_likelihood[i] + test_pretrained_samples_likelihood[i] for i in
-            range(len(test_pretrained_samples_likelihood))]
+            range(len(test_pretrained_samples_likelihood))])
         if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             just_test_finetuned_and_pretrained_samples_likelihood = [
                 just_test_finetuned_samples_likelihood[i] + just_test_pretrained_samples_likelihood[i] for i in
