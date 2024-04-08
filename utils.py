@@ -969,14 +969,14 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
 
         if args['dataset'] == 'wbc1':
             trainset, testset = get_wbc1_train_and_test_dataset_for_anomaly_detection()
-            anomaly_targets = [1 if label in anomaly_classes else 0 for label in testset.targets]
+            anomaly_targets = [0 if label == testset.normal_class_label else 1 for label in testset.targets]
             just_testset = get_just_wbc2_test_dataset_for_anomaly_detection()
-            just_test_anomaly_targets = [1 if label in anomaly_classes else 0 for label in just_testset.targets]
+            just_test_anomaly_targets = [0 if label == just_testset.normal_class_label else 1 for label in just_testset.targets]
         elif args['dataset'] == 'wbc2':
             trainset, testset = get_wbc2_train_and_test_dataset_for_anomaly_detection()
-            anomaly_targets = [1 if label in anomaly_classes else 0 for label in testset.targets]
+            anomaly_targets = [0 if label == testset.normal_class_label else 1 for label in testset.targets]
             just_testset = get_just_wbc1_test_dataset_for_anomaly_detection()
-            just_test_anomaly_targets = [1 if label in anomaly_classes else 0 for label in just_testset.targets]
+            just_test_anomaly_targets = [0 if label == just_testset.normal_class_label else 1 for label in just_testset.targets]
         else:
             trainset, testset = get_datasets_for_ViT(dataset=args['dataset'],
                                                      data_path=args['data_path'],
