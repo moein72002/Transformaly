@@ -14,8 +14,8 @@ from os.path import join
 from pytorch_pretrained_vit.model import AnomalyViT, ViT
 from datasets.wbc1 import get_wbc1_train_and_test_dataset_for_anomaly_detection, get_wbc1_id_test_dataset, get_wbc1_ood_test_dataset, get_just_wbc1_test_dataset_for_anomaly_detection
 from datasets.wbc2 import get_wbc2_train_and_test_dataset_for_anomaly_detection, get_wbc2_id_test_dataset, get_wbc2_ood_test_dataset, get_just_wbc2_test_dataset_for_anomaly_detection
-from datasets.brain_datasets.Br35H import get_br35h_trainset, get_br35h_test_set_id, get_br35h_test_set_ood, get_br35h_just_test
-from datasets.brain_datasets.Brats2015 import get_brats_trainset, get_brats_testset_id, get_brats_testset_ood, get_brats_just_test
+from datasets.brain_datasets.Br35H import prepare_br35h_dataset_files, get_br35h_trainset, get_br35h_test_set_id, get_br35h_test_set_ood, get_br35h_just_test
+from datasets.brain_datasets.Brats2015 import prepare_brats2015_dataset_files, get_brats_trainset, get_brats_testset_id, get_brats_testset_ood, get_brats_just_test
 
 if __name__ == '__main__':
 
@@ -46,6 +46,8 @@ if __name__ == '__main__':
 
     if args['dataset'] in ['br35h', 'brats2015']:
         _classes = [0]
+        prepare_br35h_dataset_files()
+        prepare_brats2015_dataset_files()
     elif args['dataset'] in ['wbc1', 'wbc2']:
         _classes = [1]
     elif args['dataset'] == 'cifar10':

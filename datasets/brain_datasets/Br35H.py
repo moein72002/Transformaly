@@ -63,7 +63,6 @@ def prepare_br35h_dataset_files():
 
 class Br35H_Dataset(Dataset):
     def __init__(self, image_path, labels, count=-1):
-        prepare_br35h_dataset_files()
 
         use_imagenet = True
         val_transforms_list = [

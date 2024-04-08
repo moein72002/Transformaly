@@ -62,7 +62,6 @@ def prepare_brats2015_dataset_files():
 
 class Brats2015_Dataset(Dataset):
     def __init__(self, image_path, labels, count=-1):
-        prepare_brats2015_dataset_files()
 
         use_imagenet = True
         val_transforms_list = [
