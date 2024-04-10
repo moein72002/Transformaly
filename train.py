@@ -126,7 +126,7 @@ def train_model(args, all_results_dict, mvtec_category=None):
                                                      normal_test_sample_only=True,
                                                      use_imagenet=args['use_imagenet']
                                                      )
-        if not args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
+        if not args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015', 'mvtec']:
             _, ood_test_set = get_datasets_for_ViT(dataset=args['dataset'],
                                                    data_path=args['data_path'],
                                                    one_vs_rest=not args['unimodal'],
