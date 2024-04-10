@@ -309,19 +309,19 @@ def extract_fetures(base_path,
 
                         if dataset == 'mvtec':
                             test_98_features = get_features(model=model, data_loader=testset_98_Loader)
-                            with open(join(extracted_features_path, 'test_98_pretrained_ViT_features.npy'), 'wb') as f:
+                            with open(join(extracted_features_path, f'{mvtec_category}_test_98_pretrained_ViT_features.npy'), 'wb') as f:
                                 np.save(f, test_98_features)
                             test_95_features = get_features(model=model, data_loader=testset_95_Loader)
-                            with open(join(extracted_features_path, 'test_95_pretrained_ViT_features.npy'), 'wb') as f:
+                            with open(join(extracted_features_path, f'{mvtec_category}_test_95_pretrained_ViT_features.npy'), 'wb') as f:
                                 np.save(f, test_95_features)
                             test_90_features = get_features(model=model, data_loader=testset_90_Loader)
-                            with open(join(extracted_features_path, 'test_90_pretrained_ViT_features.npy'), 'wb') as f:
+                            with open(join(extracted_features_path, f'{mvtec_category}_test_90_pretrained_ViT_features.npy'), 'wb') as f:
                                 np.save(f, test_90_features)
                             test_85_features = get_features(model=model, data_loader=testset_85_Loader)
-                            with open(join(extracted_features_path, 'test_85_pretrained_ViT_features.npy'), 'wb') as f:
+                            with open(join(extracted_features_path, f'{mvtec_category}_test_85_pretrained_ViT_features.npy'), 'wb') as f:
                                 np.save(f, test_85_features)
                             test_80_features = get_features(model=model, data_loader=testset_80_Loader)
-                            with open(join(extracted_features_path, 'test_80_pretrained_ViT_features.npy'), 'wb') as f:
+                            with open(join(extracted_features_path, f'{mvtec_category}_test_80_pretrained_ViT_features.npy'), 'wb') as f:
                                 np.save(f, test_80_features)
                         if dataset in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
                             just_test_features = get_features(model=model, data_loader=just_testsetLoader)
@@ -341,15 +341,15 @@ def extract_fetures(base_path,
                             test_features = np.load(f)
 
                         if dataset == "mvtec":
-                            with open(join(extracted_features_path, f'test_98_pretrained_ViT_features.npy'), 'rb') as f:
+                            with open(join(extracted_features_path, f'{mvtec_category}_test_98_pretrained_ViT_features.npy'), 'rb') as f:
                                 test_98_features = np.load(f)
-                            with open(join(extracted_features_path, f'test_95_pretrained_ViT_features.npy'), 'rb') as f:
+                            with open(join(extracted_features_path, f'{mvtec_category}_test_95_pretrained_ViT_features.npy'), 'rb') as f:
                                 test_95_features = np.load(f)
-                            with open(join(extracted_features_path, f'test_90_pretrained_ViT_features.npy'), 'rb') as f:
+                            with open(join(extracted_features_path, f'{mvtec_category}_test_90_pretrained_ViT_features.npy'), 'rb') as f:
                                 test_90_features = np.load(f)
-                            with open(join(extracted_features_path, f'test_85_pretrained_ViT_features.npy'), 'rb') as f:
+                            with open(join(extracted_features_path, f'{mvtec_category}_test_85_pretrained_ViT_features.npy'), 'rb') as f:
                                 test_85_features = np.load(f)
-                            with open(join(extracted_features_path, f'test_80_pretrained_ViT_features.npy'), 'rb') as f:
+                            with open(join(extracted_features_path, f'{mvtec_category}_test_80_pretrained_ViT_features.npy'), 'rb') as f:
                                 test_80_features = np.load(f)
                         if dataset in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
                             with open(join(extracted_features_path,
