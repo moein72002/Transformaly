@@ -1037,15 +1037,38 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None, mvtec_category=Non
     print_and_add_to_log(args, logging)
     print_and_add_to_log("========================================================",
                          logging)
-    results = {'class': [],
-               'pretrained_AUROC_scores': [],
-               'just_test_pretrained_AUROC_scores': [],
-               'eval_using_knn_pretrained_AUROC_scores': [],
-               'just_test_using_knn_pretrained_AUROC_scores': [],
-               'all_layers_finetuned_AUROC_scores': [],
-               'just_test_all_layers_finetuned_AUROC_scores': [],
-               'pretrained_and_finetuned_AUROC_scores': [],
-               'just_test_pretrained_and_finetuned_AUROC_scores': []}
+
+    if args['dataset']:
+        results = {'class': [],
+                   'pretrained_AUROC_scores': [],
+                   'test_98_pretrained_AUROC_scores': [],
+                   'test_95_pretrained_AUROC_scores': [],
+                   'test_90_pretrained_AUROC_scores': [],
+                   'test_85_pretrained_AUROC_scores': [],
+                   'test_80_pretrained_AUROC_scores': [],
+                   'all_layers_finetuned_AUROC_scores': [],
+                   'test_98_all_layers_finetuned_AUROC_scores': [],
+                   'test_95_all_layers_finetuned_AUROC_scores': [],
+                   'test_90_all_layers_finetuned_AUROC_scores': [],
+                   'test_85_all_layers_finetuned_AUROC_scores': [],
+                   'test_80_all_layers_finetuned_AUROC_scores': [],
+                   'pretrained_and_finetuned_AUROC_scores': [],
+                   'test_98_pretrained_and_finetuned_AUROC_scores': [],
+                   'test_95_pretrained_and_finetuned_AUROC_scores': [],
+                   'test_90_pretrained_and_finetuned_AUROC_scores': [],
+                   'test_85_pretrained_and_finetuned_AUROC_scores': [],
+                   'test_80_pretrained_and_finetuned_AUROC_scores': []}
+    else:
+        results = {'class': [],
+                   'pretrained_AUROC_scores': [],
+                   'just_test_pretrained_AUROC_scores': [],
+                   'eval_using_knn_pretrained_AUROC_scores': [],
+                   'just_test_using_knn_pretrained_AUROC_scores': [],
+                   'all_layers_finetuned_AUROC_scores': [],
+                   'just_test_all_layers_finetuned_AUROC_scores': [],
+                   'pretrained_and_finetuned_AUROC_scores': [],
+                   'just_test_pretrained_and_finetuned_AUROC_scores': []}
+
     for _class in _classes:
         print_and_add_to_log("===================================", logging)
         print_and_add_to_log(f"Class is : {_class}", logging)
