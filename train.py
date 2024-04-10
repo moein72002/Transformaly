@@ -25,7 +25,9 @@ def train_model(args, all_results_dict, mvtec_category=None):
     args['use_imagenet'] = True
     BASE_PATH = 'experiments'
 
-    if args['dataset'] in ['br35h', 'brats2015']:
+    if args['dataset'] == 'mvtec':
+        _classes = [0]
+    elif args['dataset'] in ['br35h', 'brats2015']:
         _classes = [0]
         prepare_br35h_dataset_files()
         prepare_brats2015_dataset_files()
