@@ -12,6 +12,8 @@ from utils import print_and_add_to_log, get_datasets_for_ViT, \
     extract_fetures
 from os.path import join
 from pytorch_pretrained_vit.model import AnomalyViT, ViT
+from collections import defaultdict
+import re
 from datasets.wbc1 import get_wbc1_train_and_test_dataset_for_anomaly_detection, get_wbc1_id_test_dataset, get_wbc1_ood_test_dataset, get_just_wbc1_test_dataset_for_anomaly_detection
 from datasets.wbc2 import get_wbc2_train_and_test_dataset_for_anomaly_detection, get_wbc2_id_test_dataset, get_wbc2_ood_test_dataset, get_just_wbc2_test_dataset_for_anomaly_detection
 from datasets.brain_datasets.Br35H import prepare_br35h_dataset_files, get_br35h_trainset, get_br35h_test_set_id, get_br35h_test_set_ood, get_br35h_just_test
@@ -277,4 +279,28 @@ if __name__ == '__main__':
     else:
         train_model(args, all_results_dict)
 
-    print(all_results_dict)
+    print(f"all_results_dict: {all_results_dict}")
+
+    if args['dataset'] == "mvtec":
+        # Step 1: Group the dictionaries by the extracted number
+        grouped_dicts = defaultdict(list)
+        for key, value in all_results_dict.items():
+            match = re.match(r'(\d+)_', key)
+            if match:
+                number = int(match.group(1))
+                grouped_dicts[number].append(value)
+
+        # Step 2: Calculate the average for each group
+        average_dict = {}
+        for number, dicts in grouped_dicts.items():
+            summed_dict = defaultdict(int)
+            for d in dicts:
+                for k, v in d.items():
+                    summed_dict[k] += v
+            # Calculating the average
+            averaged_values = {k: v / len(dicts) for k, v in summed_dict.items()}
+            average_dict[number] = averaged_values
+
+        # average_dict now contains the averaged values for each group
+        print(f"average_dict: {average_dict}")
+
