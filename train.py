@@ -16,30 +16,9 @@ from datasets.wbc1 import get_wbc1_train_and_test_dataset_for_anomaly_detection,
 from datasets.wbc2 import get_wbc2_train_and_test_dataset_for_anomaly_detection, get_wbc2_id_test_dataset, get_wbc2_ood_test_dataset, get_just_wbc2_test_dataset_for_anomaly_detection
 from datasets.brain_datasets.Br35H import prepare_br35h_dataset_files, get_br35h_trainset, get_br35h_test_set_id, get_br35h_test_set_ood, get_br35h_just_test
 from datasets.brain_datasets.Brats2015 import prepare_brats2015_dataset_files, get_brats_trainset, get_brats_testset_id, get_brats_testset_ood, get_brats_just_test
+from datasets.mvtec import get_mvtec_trainset, get_mvtec_testset_id, get_mvtec_testset_ood
 
-if __name__ == '__main__':
-
-    parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--dataset',default='cifar10')
-    parser.add_argument('--data_path', default='./data/', help='Path to the dataset')
-    parser.add_argument('--epochs', type=int, default=30, help='Number of epochs')
-    parser.add_argument('--batch_size', type=int, default=6, help='Training batch size')
-    parser.add_argument('--lr', default=0.0001,
-                        help='Learning rate value')
-    parser.add_argument('--eval_every', type=int, default=2,
-                        help='Will evaluate the model ever <eval_every> epochs')
-    parser.add_argument('--unimodal', default=False, action='store_true',
-                        help='Use the unimodal settings')
-    parser.add_argument('--test_every_epoch', default=False, action='store_true',
-                        help='Test every epoch or not')
-    parser.add_argument('--plot_every_layer_summarization', default=False, action='store_true',
-                        help='plot the per layer AUROC')
-    parser.add_argument('--whitening_threshold_for_eval', default=0.9, type=float,
-                        help='Explained variance of the whitening process for evaluation')
-    parser_args = parser.parse_args()
-    args = vars(parser_args)
-
-
+def train_model(args, all_results_dict, mvtec_category=None):
     args['use_layer_outputs'] = list(range(2, 12))
     args['use_imagenet'] = True
     BASE_PATH = 'experiments'
@@ -115,26 +94,26 @@ if __name__ == '__main__':
         print_and_add_to_log(
             "====================================================================",
             logging)
-        if args['dataset'] == 'br35h':
+        if args['dataset'] == 'mvtec':
+            trainset = get_mvtec_trainset(mvtec_category)
+            testset = get_mvtec_testset_id(mvtec_category)
+            ood_test_set = get_mvtec_testset_ood(mvtec_category)
+        elif args['dataset'] == 'br35h':
             trainset = get_br35h_trainset()
             testset = get_br35h_test_set_id()
             ood_test_set = get_br35h_test_set_ood()
-            just_testset = get_brats_just_test()
         elif args['dataset'] == 'brats2015':
             trainset = get_brats_trainset()
             testset = get_brats_testset_id()
             ood_test_set = get_brats_testset_ood()
-            just_testset = get_br35h_just_test()
         elif args['dataset'] == 'wbc1':
             trainset, _ = get_wbc1_train_and_test_dataset_for_anomaly_detection()
             testset = get_wbc1_id_test_dataset()
             ood_test_set = get_wbc1_ood_test_dataset()
-            just_testset = get_just_wbc2_test_dataset_for_anomaly_detection()
         elif args['dataset'] == 'wbc2':
             trainset, _ = get_wbc2_train_and_test_dataset_for_anomaly_detection()
             testset = get_wbc2_id_test_dataset()
             ood_test_set = get_wbc2_ood_test_dataset()
-            just_testset = get_just_wbc1_test_dataset_for_anomaly_detection()
         else:
             trainset, testset = get_datasets_for_ViT(dataset=args['dataset'],
                                                      data_path=args['data_path'],
@@ -196,7 +175,7 @@ if __name__ == '__main__':
 
         # freeze the model
         freeze_finetuned_model(model)
-        model, best_model, cur_acc_loss = train(model=model,
+        model, best_model, cur_acc_loss, all_results_dict = train(model=model,
                                                 best_model=best_model,
                                                 args=args,
                                                 dataloaders=dataloaders,
@@ -208,7 +187,9 @@ if __name__ == '__main__':
                                                 dataset=args['dataset'],
                                                 _class=_class,
                                                 BASE_PATH=BASE_PATH,
-                                                eval_classes=_classes
+                                                eval_classes=_classes,
+                                                all_results_dict=all_results_dict,
+                                                mvtec_category=mvtec_category
                                                 )
 
         training_losses = cur_acc_loss['training_losses']
@@ -256,4 +237,44 @@ if __name__ == '__main__':
                         manual_class_num_range=manual_class_num_range,
                         output_train_features=True,
                         output_test_features=True,
-                        use_imagenet=args['use_imagenet'])
+                        use_imagenet=args['use_imagenet'],
+                        mvtec_category=mvtec_category)
+
+
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser(description='')
+    parser.add_argument('--dataset',default='cifar10')
+    parser.add_argument('--data_path', default='./data/', help='Path to the dataset')
+    parser.add_argument('--epochs', type=int, default=30, help='Number of epochs')
+    parser.add_argument('--batch_size', type=int, default=6, help='Training batch size')
+    parser.add_argument('--lr', default=0.0001,
+                        help='Learning rate value')
+    parser.add_argument('--eval_every', type=int, default=2,
+                        help='Will evaluate the model ever <eval_every> epochs')
+    parser.add_argument('--unimodal', default=False, action='store_true',
+                        help='Use the unimodal settings')
+    parser.add_argument('--test_every_epoch', default=False, action='store_true',
+                        help='Test every epoch or not')
+    parser.add_argument('--plot_every_layer_summarization', default=False, action='store_true',
+                        help='plot the per layer AUROC')
+    parser.add_argument('--whitening_threshold_for_eval', default=0.9, type=float,
+                        help='Explained variance of the whitening process for evaluation')
+    parser.add_argument('--shrink_factor', default=1.0, type=float, help='shrink factor for mvtec')
+    parser_args = parser.parse_args()
+    args = vars(parser_args)
+
+    all_results_dict = {}
+
+    if args['dataset'] == "mvtec":
+        all_entries = sorted(os.listdir("/kaggle/input/mvtec-ad/"))
+        mvtec_categories = [entry for entry in all_entries if os.path.isdir(os.path.join("/kaggle/input/mvtec-ad/", entry))]
+        # all_categories = sorted(os.listdir("/kaggle/input/mvtec-ad/"))
+        auc_sum = 0.0
+        for category in mvtec_categories:
+            train_model(args, all_results_dict, mvtec_category=category)
+
+    else:
+        train_model(args, all_results_dict)
+
+    print(all_results_dict)

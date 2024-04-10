@@ -26,6 +26,7 @@ from torchvision.datasets import CIFAR10, CIFAR100, FashionMNIST, ImageFolder
 from torchvision.transforms import Compose
 from datasets.wbc1 import get_wbc1_train_and_test_dataset_for_anomaly_detection, get_wbc1_id_test_dataset, get_just_wbc1_test_dataset_for_anomaly_detection
 from datasets.wbc2 import get_wbc2_train_and_test_dataset_for_anomaly_detection, get_wbc2_id_test_dataset, get_just_wbc2_test_dataset_for_anomaly_detection
+from torchvision.transforms import Compose
 
 import logging
 from os.path import join
@@ -41,6 +42,7 @@ from datasets.wbc1 import get_wbc1_train_and_test_dataset_for_anomaly_detection,
 from datasets.wbc2 import get_wbc2_train_and_test_dataset_for_anomaly_detection, get_just_wbc2_test_dataset_for_anomaly_detection
 from datasets.brain_datasets.Br35H import get_br35h_trainset, get_br35h_test_set, get_br35h_just_test
 from datasets.brain_datasets.Brats2015 import get_brats_trainset, get_brats_testset, get_brats_just_test
+from datasets.mvtec import get_mvtec_trainset, get_mvtec_testset_with_padding, get_mvtec_testset_id, get_mvtec_testset_ood
 
 
 
@@ -124,7 +126,8 @@ def extract_fetures(base_path,
                     unimodal_vals=None,
                     output_train_features=True,
                     output_test_features=True,
-                    use_imagenet=False):
+                    use_imagenet=False,
+                    mvtec_category=None):
     if unimodal_vals is None:
         unimodal_vals = [True, False]
 
@@ -142,7 +145,9 @@ def extract_fetures(base_path,
         if manual_class_num_range is not None:
             _classes = range(*manual_class_num_range)
         else:
-            if dataset in ['br35h', 'brats2015']:
+            if dataset in ['mvtec']:
+                _classes = [0]
+            elif dataset in ['br35h', 'brats2015']:
                 _classes = [0]
             elif dataset in ['wbc1', 'wbc2']:
                 _classes = [1]
@@ -162,7 +167,7 @@ def extract_fetures(base_path,
                 print_and_add_to_log(f"Class: {_class}", logging)
                 print_and_add_to_log(f"Unimodal setting: {unimodal}", logging)
 
-                assert dataset in ['br35h', 'brats2015', 'wbc1', 'wbc2', 'cifar10', 'cifar100', 'fmnist', 'cats_vs_dogs',
+                assert dataset in ['mvtec', 'br35h', 'brats2015', 'wbc1', 'wbc2', 'cifar10', 'cifar100', 'fmnist', 'cats_vs_dogs',
                                    'dior'], f"{dataset} not supported yet!"
                 if unimodal:
                     base_feature_path = join(base_path, f'unimodal/{dataset}/class_{str(_class)}')
@@ -221,7 +226,21 @@ def extract_fetures(base_path,
                 model.to('cuda')
 
                 # get dataset
-                if dataset == 'br35h':
+                if dataset == 'mvtec':
+                    trainset = get_mvtec_trainset(mvtec_category)
+                    testset = get_mvtec_testset_with_padding(mvtec_category)
+                    anomaly_targets = testset.test_labels
+                    testset_98 = get_mvtec_testset_with_padding(mvtec_category, shrink_factor=0.98)
+                    anomaly_targets_98 = testset_98.test_labels
+                    testset_95 = get_mvtec_testset_with_padding(mvtec_category, shrink_factor=0.95)
+                    anomaly_targets_95 = testset_95.test_labels
+                    testset_90 = get_mvtec_testset_with_padding(mvtec_category, shrink_factor=0.90)
+                    anomaly_targets_90 = testset_90.test_labels
+                    testset_85 = get_mvtec_testset_with_padding(mvtec_category, shrink_factor=0.85)
+                    anomaly_targets_85 = testset_85.test_labels
+                    testset_80 = get_mvtec_testset_with_padding(mvtec_category, shrink_factor=0.80)
+                    anomaly_targets_80 = testset_80.test_labels
+                elif dataset == 'br35h':
                     trainset = get_br35h_trainset()
                     testset = get_br35h_test_set()
                     anomaly_targets = testset.labels
@@ -256,6 +275,12 @@ def extract_fetures(base_path,
                 # Create datasetLoaders from trainset and testset
                 trainsetLoader = DataLoader(trainset, batch_size=BATCH_SIZE, shuffle=False)
                 testsetLoader = DataLoader(testset, batch_size=BATCH_SIZE, shuffle=False)
+                if dataset == 'mvtec':
+                    testset_98_Loader = DataLoader(testset_98, batch_size=BATCH_SIZE, shuffle=False)
+                    testset_95_Loader = DataLoader(testset_95, batch_size=BATCH_SIZE, shuffle=False)
+                    testset_90_Loader = DataLoader(testset_90, batch_size=BATCH_SIZE, shuffle=False)
+                    testset_85_Loader = DataLoader(testset_85, batch_size=BATCH_SIZE, shuffle=False)
+                    testset_80_Loader = DataLoader(testset_80, batch_size=BATCH_SIZE, shuffle=False)
                 if dataset in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
                     just_testsetLoader = DataLoader(just_testset, batch_size=BATCH_SIZE, shuffle=False)
 
@@ -282,10 +307,25 @@ def extract_fetures(base_path,
                                        'test_pretrained_ViT_features.npy'), 'wb') as f:
                             np.save(f, test_features)
 
+                        if dataset == 'mvtec':
+                            test_98_features = get_features(model=model, data_loader=testset_98_Loader)
+                            with open(join(extracted_features_path, 'test_98_pretrained_ViT_features.npy'), 'wb') as f:
+                                np.save(f, test_98_features)
+                            test_95_features = get_features(model=model, data_loader=testset_95_Loader)
+                            with open(join(extracted_features_path, 'test_95_pretrained_ViT_features.npy'), 'wb') as f:
+                                np.save(f, test_95_features)
+                            test_90_features = get_features(model=model, data_loader=testset_90_Loader)
+                            with open(join(extracted_features_path, 'test_90_pretrained_ViT_features.npy'), 'wb') as f:
+                                np.save(f, test_90_features)
+                            test_85_features = get_features(model=model, data_loader=testset_85_Loader)
+                            with open(join(extracted_features_path, 'test_85_pretrained_ViT_features.npy'), 'wb') as f:
+                                np.save(f, test_85_features)
+                            test_80_features = get_features(model=model, data_loader=testset_80_Loader)
+                            with open(join(extracted_features_path, 'test_80_pretrained_ViT_features.npy'), 'wb') as f:
+                                np.save(f, test_80_features)
                         if dataset in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
                             just_test_features = get_features(model=model, data_loader=just_testsetLoader)
-                            with open(join(extracted_features_path,
-                                           'just_test_pretrained_ViT_features.npy'), 'wb') as f:
+                            with open(join(extracted_features_path, 'just_test_pretrained_ViT_features.npy'), 'wb') as f:
                                 np.save(f, just_test_features)
 
                 else:
@@ -300,6 +340,17 @@ def extract_fetures(base_path,
                                        f'test_pretrained_ViT_features.npy'), 'rb') as f:
                             test_features = np.load(f)
 
+                        if dataset == "mvtec":
+                            with open(join(extracted_features_path, f'test_98_pretrained_ViT_features.npy'), 'rb') as f:
+                                test_98_features = np.load(f)
+                            with open(join(extracted_features_path, f'test_95_pretrained_ViT_features.npy'), 'rb') as f:
+                                test_95_features = np.load(f)
+                            with open(join(extracted_features_path, f'test_90_pretrained_ViT_features.npy'), 'rb') as f:
+                                test_90_features = np.load(f)
+                            with open(join(extracted_features_path, f'test_85_pretrained_ViT_features.npy'), 'rb') as f:
+                                test_85_features = np.load(f)
+                            with open(join(extracted_features_path, f'test_80_pretrained_ViT_features.npy'), 'rb') as f:
+                                test_80_features = np.load(f)
                         if dataset in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
                             with open(join(extracted_features_path,
                                            f'just_test_pretrained_ViT_features.npy'), 'rb') as f:
@@ -308,6 +359,12 @@ def extract_fetures(base_path,
                 if output_train_features and output_test_features:
                     print_and_add_to_log("Calculate KNN score", logging)
                     distances = knn_score(train_features, test_features, n_neighbours=2)
+                    if dataset == 'mvtec':
+                        test_98_distances = knn_score(train_features, test_98_features, n_neighbours=2)
+                        test_95_distances = knn_score(train_features, test_95_features, n_neighbours=2)
+                        test_90_distances = knn_score(train_features, test_90_features, n_neighbours=2)
+                        test_85_distances = knn_score(train_features, test_85_features, n_neighbours=2)
+                        test_80_distances = knn_score(train_features, test_80_features, n_neighbours=2)
                     if dataset in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
                         just_test_distances = knn_score(train_features, just_test_features, n_neighbours=2)
 
@@ -318,6 +375,17 @@ def extract_fetures(base_path,
 
                     auc = roc_auc_score(anomaly_targets, distances)
                     print(f"train {dataset}, test {dataset} -> AUC: {auc}")
+                    if dataset == 'mvtec':
+                        test_98_auc = roc_auc_score(anomaly_targets_98, test_98_distances)
+                        print(f"train mvtec_{mvtec_category}, test mvtec_{mvtec_category}_98 -> AUC: {test_98_auc}")
+                        test_95_auc = roc_auc_score(anomaly_targets_95, test_95_distances)
+                        print(f"train mvtec_{mvtec_category}, test mvtec_{mvtec_category}_95 -> AUC: {test_95_auc}")
+                        test_90_auc = roc_auc_score(anomaly_targets_90, test_90_distances)
+                        print(f"train mvtec_{mvtec_category}, test mvtec_{mvtec_category}_90 -> AUC: {test_90_auc}")
+                        test_85_auc = roc_auc_score(anomaly_targets_85, test_85_distances)
+                        print(f"train mvtec_{mvtec_category}, test mvtec_{mvtec_category}_85 -> AUC: {test_85_auc}")
+                        test_80_auc = roc_auc_score(anomaly_targets_80, test_80_distances)
+                        print(f"train mvtec_{mvtec_category}, test mvtec_{mvtec_category}_80 -> AUC: {test_80_auc}")
                     if dataset in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
                         just_test_auc = roc_auc_score(just_test_anomaly_targets, just_test_distances)
                         just_test_dataset_name = "wbc2" if dataset == "wbc1" else "wbc1"
@@ -408,7 +476,7 @@ def forward_one_epoch(loader,
 def train(model, best_model, args, dataloaders,
           model_checkpoint_path,
           output_path, device='cuda',
-          seed=42, anomaly_classes=None, dataset=None, _class=None, BASE_PATH=None, eval_classes=None):
+          seed=42, anomaly_classes=None, dataset=None, _class=None, BASE_PATH=None, eval_classes=None, all_results_dict=None, mvtec_category=None):
     torch.manual_seed(0)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
@@ -524,7 +592,10 @@ def train(model, best_model, args, dataloaders,
             #     break
 
             if args['plot_every_layer_summarization']:
-                if dataset == 'br35h':
+                if dataset == 'mvtec':
+                    testset = get_mvtec_testset_with_padding(mvtec_category)
+                    anomaly_targets = testset.test_labels
+                elif dataset == 'br35h':
                     testset = get_br35h_test_set()
                     anomaly_targets = testset.labels
                 elif dataset == 'brats2015':
@@ -583,7 +654,7 @@ def train(model, best_model, args, dataloaders,
             pretrained_model_for_test.fc = Identity()
             pretrained_model_for_test.eval()
 
-            if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
+            if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015', 'mvtec']:
                 manual_class_num_range = None
             else:
                 manual_class_num_range = [_class]
@@ -598,7 +669,8 @@ def train(model, best_model, args, dataloaders,
                             manual_class_num_range=manual_class_num_range,
                             output_train_features=True,
                             output_test_features=True,
-                            use_imagenet=args['use_imagenet'])
+                            use_imagenet=args['use_imagenet'],
+                            mvtec_category=mvtec_category)
 
             eval_args = {
                 "dataset": args["dataset"],
@@ -611,7 +683,9 @@ def train(model, best_model, args, dataloaders,
                 "use_layer_outputs": list(range(2, 12))
             }
             eval_BASE_PATH = 'experiments'
-            evaluate_method(args=eval_args, BASE_PATH=eval_BASE_PATH, _classes=eval_classes)
+            results = evaluate_method(args=eval_args, BASE_PATH=eval_BASE_PATH, _classes=eval_classes, mvtec_category=mvtec_category)
+            result_name = f"{epoch}_{dataset}_{mvtec_category}" if dataset == "mvtec" else f"{epoch}_{dataset}"
+            all_results_dict[result_name] = results
 
     progress_bar_str = 'Test: repeat %d -- Mean Loss: %.3f | Last Loss: %.3f'
 
@@ -629,7 +703,7 @@ def train(model, best_model, args, dataloaders,
     test_epoch_loss = np.mean(test_losses)
     print("===================== OOD val Results =====================")
     print(f'OOD val Loss : {test_epoch_loss}')
-    return model, best_model, cur_acc_loss
+    return model, best_model, cur_acc_loss, all_results_dict
 
 
 def get_finetuned_features(model,
@@ -695,7 +769,10 @@ def get_transforms(dataset, use_imagenet):
 
 
 def get_number_of_classes(dataset):
-    if dataset in ['br35h', 'brats2015']:
+    if dataset == 'mvtec':
+        number_of_classes = 2
+
+    elif dataset in ['br35h', 'brats2015']:
         number_of_classes = 2
 
     elif dataset in ['wbc1', 'wbc2']:
@@ -949,7 +1026,7 @@ def plot_loss(train_losses, val_losses, to_show=True,
     if to_show:
         plt.show()
 
-def evaluate_method(args=None, BASE_PATH=None, _classes=None):
+def evaluate_method(args=None, BASE_PATH=None, _classes=None, mvtec_category=None):
     logging.basicConfig(
         filename=join(BASE_PATH,
                       f'{"unimodal" if args["unimodal"] else "multimodal"}/{args["dataset"]}',
@@ -993,7 +1070,21 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
 
         results['class'].append(args['_class'])
 
-        if args['dataset'] == 'br35h':
+        if args['dataset'] == 'mvtec':
+            trainset = get_mvtec_trainset(mvtec_category)
+            testset = get_mvtec_testset_with_padding(mvtec_category)
+            anomaly_targets = testset.test_labels
+            testset_98 = get_mvtec_testset_with_padding(mvtec_category, shrink_factor=0.98)
+            anomaly_targets_98 = testset_98.test_labels
+            testset_95 = get_mvtec_testset_with_padding(mvtec_category, shrink_factor=0.95)
+            anomaly_targets_95 = testset_95.test_labels
+            testset_90 = get_mvtec_testset_with_padding(mvtec_category, shrink_factor=0.90)
+            anomaly_targets_90 = testset_90.test_labels
+            testset_85 = get_mvtec_testset_with_padding(mvtec_category, shrink_factor=0.85)
+            anomaly_targets_85 = testset_85.test_labels
+            testset_80 = get_mvtec_testset_with_padding(mvtec_category, shrink_factor=0.80)
+            anomaly_targets_80 = testset_80.test_labels
+        elif args['dataset'] == 'br35h':
             trainset = get_br35h_trainset()
             testset = get_br35h_test_set()
             anomaly_targets = testset.labels
@@ -1028,6 +1119,12 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
         test_loader = torch.utils.data.DataLoader(testset,
                                                   batch_size=args['batch_size'],
                                                   shuffle=False)
+        if args['dataset'] == 'mvtec':
+            test_98_loader = torch.utils.data.DataLoader(testset_98, batch_size=args['batch_size'], shuffle=False)
+            test_95_loader = torch.utils.data.DataLoader(testset_95, batch_size=args['batch_size'], shuffle=False)
+            test_90_loader = torch.utils.data.DataLoader(testset_90, batch_size=args['batch_size'], shuffle=False)
+            test_85_loader = torch.utils.data.DataLoader(testset_85, batch_size=args['batch_size'], shuffle=False)
+            test_80_loader = torch.utils.data.DataLoader(testset_80, batch_size=args['batch_size'], shuffle=False)
         if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             just_test_loader = torch.utils.data.DataLoader(just_testset,
                                                            batch_size=args['batch_size'],
@@ -1049,6 +1146,27 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
                        f'{args["dataset"]}/class_{args["_class"]}/extracted_features',
                        'test_pretrained_ViT_features.npy'), 'rb') as f:
             test_features = np.load(f)
+        if args['dataset'] == 'mvtec':
+            with open(join(BASE_PATH, f'{"unimodal" if args["unimodal"] else "multimodal"}',
+                           f'{args["dataset"]}/class_{args["_class"]}/extracted_features',
+                           f'{mvtec_category}_test_98_pretrained_ViT_features.npy'), 'rb') as f:
+                test_98_features = np.load(f)
+            with open(join(BASE_PATH, f'{"unimodal" if args["unimodal"] else "multimodal"}',
+                           f'{args["dataset"]}/class_{args["_class"]}/extracted_features',
+                           f'{mvtec_category}_test_95_pretrained_ViT_features.npy'), 'rb') as f:
+                test_95_features = np.load(f)
+            with open(join(BASE_PATH, f'{"unimodal" if args["unimodal"] else "multimodal"}',
+                           f'{args["dataset"]}/class_{args["_class"]}/extracted_features',
+                           f'{mvtec_category}_test_90_pretrained_ViT_features.npy'), 'rb') as f:
+                test_90_features = np.load(f)
+            with open(join(BASE_PATH, f'{"unimodal" if args["unimodal"] else "multimodal"}',
+                           f'{args["dataset"]}/class_{args["_class"]}/extracted_features',
+                           f'{mvtec_category}_test_85_pretrained_ViT_features.npy'), 'rb') as f:
+                test_85_features = np.load(f)
+            with open(join(BASE_PATH, f'{"unimodal" if args["unimodal"] else "multimodal"}',
+                           f'{args["dataset"]}/class_{args["_class"]}/extracted_features',
+                           f'{mvtec_category}_test_80_pretrained_ViT_features.npy'), 'rb') as f:
+                test_80_features = np.load(f)
         if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             with open(join(BASE_PATH, f'{"unimodal" if args["unimodal"] else "multimodal"}',
                            f'{args["dataset"]}/class_{args["_class"]}/extracted_features',
@@ -1074,6 +1192,12 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
         pca = PCA(n_components=n_components, svd_solver='full', whiten=True)
         train_features = np.ascontiguousarray(pca.fit_transform(train_features))
         test_features = np.ascontiguousarray(pca.transform(test_features))
+        if args['dataset'] == 'mvtec':
+            test_98_features = np.ascontiguousarray(pca.transform(test_98_features))
+            test_95_features = np.ascontiguousarray(pca.transform(test_95_features))
+            test_90_features = np.ascontiguousarray(pca.transform(test_90_features))
+            test_85_features = np.ascontiguousarray(pca.transform(test_85_features))
+            test_80_features = np.ascontiguousarray(pca.transform(test_80_features))
         if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             just_test_features = np.ascontiguousarray(pca.transform(just_test_features))
         print_and_add_to_log("Whitening ended", logging)
@@ -1085,6 +1209,12 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
                                              n_init=1)
         dens_model.fit(train_features)
         test_pretrained_samples_likelihood = dens_model.score_samples(test_features)
+        if args['dataset'] == 'mvtec':
+            test_98_pretrained_samples_likelihood = dens_model.score_samples(test_98_features)
+            test_95_pretrained_samples_likelihood = dens_model.score_samples(test_95_features)
+            test_90_pretrained_samples_likelihood = dens_model.score_samples(test_90_features)
+            test_85_pretrained_samples_likelihood = dens_model.score_samples(test_85_features)
+            test_80_pretrained_samples_likelihood = dens_model.score_samples(test_80_features)
         if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             just_test_pretrained_samples_likelihood = dens_model.score_samples(just_test_features)
         print_and_add_to_log("----------------------", logging)
@@ -1093,6 +1223,12 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
 
         eval_using_knn_distances = knn_score(train_features, test_features, n_neighbours=2)
         eval_using_knn_auc = roc_auc_score(anomaly_targets, eval_using_knn_distances)
+        if args['dataset'] == 'mvtec':
+            test_98_pretrained_auc = roc_auc_score(anomaly_targets_98, -test_98_pretrained_samples_likelihood)
+            test_95_pretrained_auc = roc_auc_score(anomaly_targets_95, -test_95_pretrained_samples_likelihood)
+            test_90_pretrained_auc = roc_auc_score(anomaly_targets_90, -test_90_pretrained_samples_likelihood)
+            test_85_pretrained_auc = roc_auc_score(anomaly_targets_85, -test_85_pretrained_samples_likelihood)
+            test_80_pretrained_auc = roc_auc_score(anomaly_targets_80, -test_80_pretrained_samples_likelihood)
         if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             just_test_pretrained_auc = roc_auc_score(just_test_anomaly_targets, -just_test_pretrained_samples_likelihood)
             just_test_eval_using_knn_distances = knn_score(train_features, just_test_features, n_neighbours=2)
@@ -1102,12 +1238,24 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
         print_and_add_to_log("----------------------", logging)
         results['pretrained_AUROC_scores'].append(pretrained_auc)
         results['eval_using_knn_pretrained_AUROC_scores'].append(eval_using_knn_auc)
+        if args['dataset'] == 'mvtec':
+            results['test_98_pretrained_AUROC_scores'].append(test_98_pretrained_auc)
+            results['test_95_pretrained_AUROC_scores'].append(test_95_pretrained_auc)
+            results['test_90_pretrained_AUROC_scores'].append(test_90_pretrained_auc)
+            results['test_85_pretrained_AUROC_scores'].append(test_85_pretrained_auc)
+            results['test_80_pretrained_AUROC_scores'].append(test_80_pretrained_auc)
         if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             results['just_test_pretrained_AUROC_scores'].append(just_test_pretrained_auc)
             results['just_test_using_knn_pretrained_AUROC_scores'].append(just_test_eval_using_knn_auc)
 
         # get finetuned prediction head scores
         FINETUNED_PREDICTION_FILE_NAME = 'full_test_finetuned_scores.npy'
+        if args['dataset'] == 'mvtec':
+            TEST_98_FINETUNED_PREDICTION_FILE_NAME = 'full_test_98_finetuned_scores.npy'
+            TEST_95_FINETUNED_PREDICTION_FILE_NAME = 'full_test_95_finetuned_scores.npy'
+            TEST_90_FINETUNED_PREDICTION_FILE_NAME = 'full_test_90_finetuned_scores.npy'
+            TEST_85_FINETUNED_PREDICTION_FILE_NAME = 'full_test_85_finetuned_scores.npy'
+            TEST_80_FINETUNED_PREDICTION_FILE_NAME = 'full_test_80_finetuned_scores.npy'
         if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             JUST_TEST_FINETUNED_PREDICTION_FILE_NAME = 'just_full_test_finetuned_scores.npy'
 
@@ -1140,14 +1288,25 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
 
             test_finetuned_features = get_finetuned_features(model=model,
                                                              loader=test_loader)
+            if args['dataset'] == 'mvtec':
+                test_98_finetuned_features = get_finetuned_features(model=model, loader=test_98_loader)
+                test_95_finetuned_features = get_finetuned_features(model=model, loader=test_95_loader)
+                test_90_finetuned_features = get_finetuned_features(model=model, loader=test_90_loader)
+                test_85_finetuned_features = get_finetuned_features(model=model, loader=test_85_loader)
+                test_80_finetuned_features = get_finetuned_features(model=model, loader=test_80_loader)
             if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
-                just_test_finetuned_features = get_finetuned_features(model=model,
-                                                                      loader=just_test_loader)
+                just_test_finetuned_features = get_finetuned_features(model=model, loader=just_test_loader)
 
             if not os.path.exists(join(base_feature_path, 'features_distances')):
                 os.makedirs(join(base_feature_path, 'features_distances'))
             np.save(join(base_feature_path, 'features_distances', FINETUNED_PREDICTION_FILE_NAME),
                     test_finetuned_features)
+            if args['dataset'] == 'mvtec':
+                np.save(join(base_feature_path, 'features_distances', TEST_98_FINETUNED_PREDICTION_FILE_NAME), test_98_finetuned_features)
+                np.save(join(base_feature_path, 'features_distances', TEST_95_FINETUNED_PREDICTION_FILE_NAME), test_95_finetuned_features)
+                np.save(join(base_feature_path, 'features_distances', TEST_90_FINETUNED_PREDICTION_FILE_NAME), test_90_finetuned_features)
+                np.save(join(base_feature_path, 'features_distances', TEST_85_FINETUNED_PREDICTION_FILE_NAME), test_85_finetuned_features)
+                np.save(join(base_feature_path, 'features_distances', TEST_80_FINETUNED_PREDICTION_FILE_NAME), test_80_finetuned_features)
             if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
                 np.save(join(base_feature_path, 'features_distances', JUST_TEST_FINETUNED_PREDICTION_FILE_NAME),
                         just_test_finetuned_features)
@@ -1155,13 +1314,29 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
         else:
             test_finetuned_features = np.load(
                 join(base_feature_path, 'features_distances', FINETUNED_PREDICTION_FILE_NAME))
+            if args['dataset'] == 'mvtec':
+                test_98_finetuned_features = np.load(join(base_feature_path, 'features_distances', TEST_98_FINETUNED_PREDICTION_FILE_NAME))
+                test_95_finetuned_features = np.load(join(base_feature_path, 'features_distances', TEST_95_FINETUNED_PREDICTION_FILE_NAME))
+                test_90_finetuned_features = np.load(join(base_feature_path, 'features_distances', TEST_90_FINETUNED_PREDICTION_FILE_NAME))
+                test_85_finetuned_features = np.load(join(base_feature_path, 'features_distances', TEST_85_FINETUNED_PREDICTION_FILE_NAME))
+                test_80_finetuned_features = np.load(join(base_feature_path, 'features_distances', TEST_80_FINETUNED_PREDICTION_FILE_NAME))
             if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
-                just_test_finetuned_features = np.load(
-                    join(base_feature_path, 'features_distances', JUST_TEST_FINETUNED_PREDICTION_FILE_NAME))
+                just_test_finetuned_features = np.load(join(base_feature_path, 'features_distances', JUST_TEST_FINETUNED_PREDICTION_FILE_NAME))
 
         if test_finetuned_features.shape[0] == 1:
             test_finetuned_features = test_finetuned_features[0]
 
+        if args['dataset'] == 'mvtec':
+            if test_98_finetuned_features.shape[0] == 1:
+                test_98_finetuned_features = test_98_finetuned_features[0]
+            if test_95_finetuned_features.shape[0] == 1:
+                test_95_finetuned_features = test_95_finetuned_features[0]
+            if test_90_finetuned_features.shape[0] == 1:
+                test_90_finetuned_features = test_90_finetuned_features[0]
+            if test_85_finetuned_features.shape[0] == 1:
+                test_85_finetuned_features = test_85_finetuned_features[0]
+            if test_80_finetuned_features.shape[0] == 1:
+                test_80_finetuned_features = test_80_finetuned_features[0]
         if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             if just_test_finetuned_features.shape[0] == 1:
                 just_test_finetuned_features = just_test_finetuned_features[0]
@@ -1204,8 +1379,16 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
 
         train_finetuned_features = train_finetuned_features[:, args['use_layer_outputs']]
         test_finetuned_features = test_finetuned_features[:, args['use_layer_outputs']]
+
+        if args['dataset'] == 'mvtec':
+            test_98_finetuned_features = test_98_finetuned_features[:, args['use_layer_outputs']]
+            test_95_finetuned_features = test_95_finetuned_features[:, args['use_layer_outputs']]
+            test_90_finetuned_features = test_90_finetuned_features[:, args['use_layer_outputs']]
+            test_85_finetuned_features = test_85_finetuned_features[:, args['use_layer_outputs']]
+            test_80_finetuned_features = test_80_finetuned_features[:, args['use_layer_outputs']]
         if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             just_test_finetuned_features = just_test_finetuned_features[:, args['use_layer_outputs']]
+
         gmm_scores = []
         train_gmm_scores = []
         gmm = mixture.GaussianMixture(n_components=1,
@@ -1214,6 +1397,12 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
                                       n_init=1)
         gmm.fit(train_finetuned_features)
         test_finetuned_samples_likelihood = gmm.score_samples(test_finetuned_features)
+        if args['dataset'] == 'mvtec':
+            test_98_finetuned_samples_likelihood = gmm.score_samples(test_98_finetuned_features)
+            test_95_finetuned_samples_likelihood = gmm.score_samples(test_95_finetuned_features)
+            test_90_finetuned_samples_likelihood = gmm.score_samples(test_90_finetuned_features)
+            test_85_finetuned_samples_likelihood = gmm.score_samples(test_85_finetuned_features)
+            test_80_finetuned_samples_likelihood = gmm.score_samples(test_80_finetuned_features)
         if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             just_test_finetuned_samples_likelihood = gmm.score_samples(just_test_finetuned_features)
         # train_finetuned_samples_likelihood = gmm.score_samples(train_finetuned_features)
@@ -1223,11 +1412,27 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
         print_and_add_to_log(f"All Block outputs prediciton AUROC score is: {test_finetuned_auc}",
                              logging)
 
+        if args['dataset'] == 'mvtec':
+            test_98_finetuned_auc = roc_auc_score(anomaly_targets_98, -test_98_finetuned_samples_likelihood)
+            print_and_add_to_log(f"test_98 all Block outputs prediciton AUROC score is: {test_98_finetuned_auc}", logging)
+            test_95_finetuned_auc = roc_auc_score(anomaly_targets_95, -test_95_finetuned_samples_likelihood)
+            print_and_add_to_log(f"test_95 all Block outputs prediciton AUROC score is: {test_95_finetuned_auc}", logging)
+            test_90_finetuned_auc = roc_auc_score(anomaly_targets_90, -test_90_finetuned_samples_likelihood)
+            print_and_add_to_log(f"test_90 all Block outputs prediciton AUROC score is: {test_90_finetuned_auc}", logging)
+            test_85_finetuned_auc = roc_auc_score(anomaly_targets_85, -test_85_finetuned_samples_likelihood)
+            print_and_add_to_log(f"test_85 all Block outputs prediciton AUROC score is: {test_85_finetuned_auc}", logging)
+            test_80_finetuned_auc = roc_auc_score(anomaly_targets_80, -test_80_finetuned_samples_likelihood)
+            print_and_add_to_log(f"test_80 all Block outputs prediciton AUROC score is: {test_80_finetuned_auc}", logging)
         if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             just_test_finetuned_auc = roc_auc_score(just_test_anomaly_targets, -just_test_finetuned_samples_likelihood)
-            print_and_add_to_log(f"Just test all Block outputs prediciton AUROC score is: {just_test_finetuned_auc}",
-                                 logging)
+            print_and_add_to_log(f"Just test all Block outputs prediciton AUROC score is: {just_test_finetuned_auc}", logging)
         results['all_layers_finetuned_AUROC_scores'].append(test_finetuned_auc)
+        if args['dataset'] == 'mvtec':
+            results['test_98_all_layers_finetuned_AUROC_scores'].append(test_98_finetuned_auc)
+            results['test_95_all_layers_finetuned_AUROC_scores'].append(test_95_finetuned_auc)
+            results['test_90_all_layers_finetuned_AUROC_scores'].append(test_90_finetuned_auc)
+            results['test_85_all_layers_finetuned_AUROC_scores'].append(test_85_finetuned_auc)
+            results['test_80_all_layers_finetuned_AUROC_scores'].append(test_80_finetuned_auc)
         if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             results['just_test_all_layers_finetuned_AUROC_scores'].append(just_test_finetuned_auc)
 
@@ -1236,24 +1441,57 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
         finetuned_and_pretrained_samples_likelihood = np.array([
             test_finetuned_samples_likelihood[i] + test_pretrained_samples_likelihood[i] for i in
             range(len(test_pretrained_samples_likelihood))])
+        if args['dataset'] == 'mvtec':
+            test_98_finetuned_and_pretrained_samples_likelihood = np.array([
+                test_98_finetuned_samples_likelihood[i] + test_98_pretrained_samples_likelihood[i] for i in
+                range(len(test_98_pretrained_samples_likelihood))])
+            test_95_finetuned_and_pretrained_samples_likelihood = np.array([
+                test_95_finetuned_samples_likelihood[i] + test_95_pretrained_samples_likelihood[i] for i in
+                range(len(test_95_pretrained_samples_likelihood))])
+            test_90_finetuned_and_pretrained_samples_likelihood = np.array([
+                test_90_finetuned_samples_likelihood[i] + test_90_pretrained_samples_likelihood[i] for i in
+                range(len(test_90_pretrained_samples_likelihood))])
+            test_85_finetuned_and_pretrained_samples_likelihood = np.array([
+                test_85_finetuned_samples_likelihood[i] + test_85_pretrained_samples_likelihood[i] for i in
+                range(len(test_85_pretrained_samples_likelihood))])
+            test_80_finetuned_and_pretrained_samples_likelihood = np.array([
+                test_80_finetuned_samples_likelihood[i] + test_80_pretrained_samples_likelihood[i] for i in
+                range(len(test_80_pretrained_samples_likelihood))])
         if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             just_test_finetuned_and_pretrained_samples_likelihood = np.array([
                 just_test_finetuned_samples_likelihood[i] + just_test_pretrained_samples_likelihood[i] for i in
                 range(len(just_test_pretrained_samples_likelihood))])
 
         finetuned_and_pretrained_auc = roc_auc_score(anomaly_targets, -finetuned_and_pretrained_samples_likelihood)
+        if args['dataset'] == 'mvtec':
+            test_98_finetuned_and_pretrained_auc = roc_auc_score(anomaly_targets_98, -test_98_finetuned_and_pretrained_samples_likelihood)
+            test_95_finetuned_and_pretrained_auc = roc_auc_score(anomaly_targets_95, -test_95_finetuned_and_pretrained_samples_likelihood)
+            test_90_finetuned_and_pretrained_auc = roc_auc_score(anomaly_targets_90, -test_90_finetuned_and_pretrained_samples_likelihood)
+            test_85_finetuned_and_pretrained_auc = roc_auc_score(anomaly_targets_85, -test_85_finetuned_and_pretrained_samples_likelihood)
+            test_80_finetuned_and_pretrained_auc = roc_auc_score(anomaly_targets_80, -test_80_finetuned_and_pretrained_samples_likelihood)
         if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
-            just_test_finetuned_and_pretrained_auc = roc_auc_score(just_test_anomaly_targets,
-                                                                   -just_test_finetuned_and_pretrained_samples_likelihood)
+            just_test_finetuned_and_pretrained_auc = roc_auc_score(just_test_anomaly_targets, -just_test_finetuned_and_pretrained_samples_likelihood)
         print_and_add_to_log(
             f"The bgm and output prediction prediciton AUROC is: {finetuned_and_pretrained_auc}",
             logging)
+        if args['dataset'] == 'mvtec':
+            print_and_add_to_log(f"test_98: the bgm and output prediction prediciton AUROC is: {test_98_finetuned_and_pretrained_auc}", logging)
+            print_and_add_to_log(f"test_95: the bgm and output prediction prediciton AUROC is: {test_95_finetuned_and_pretrained_auc}", logging)
+            print_and_add_to_log(f"test_90: the bgm and output prediction prediciton AUROC is: {test_90_finetuned_and_pretrained_auc}", logging)
+            print_and_add_to_log(f"test_85: the bgm and output prediction prediciton AUROC is: {test_85_finetuned_and_pretrained_auc}", logging)
+            print_and_add_to_log(f"test_80: the bgm and output prediction prediciton AUROC is: {test_80_finetuned_and_pretrained_auc}", logging)
         if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             print_and_add_to_log(
                 f"Just test: the bgm and output prediction prediciton AUROC is: {just_test_finetuned_and_pretrained_auc}",
                 logging)
 
         results['pretrained_and_finetuned_AUROC_scores'].append(finetuned_and_pretrained_auc)
+        if args['dataset'] == 'mvtec':
+            results['test_98_pretrained_and_finetuned_AUROC_scores'].append(test_98_finetuned_and_pretrained_auc)
+            results['test_95_pretrained_and_finetuned_AUROC_scores'].append(test_95_finetuned_and_pretrained_auc)
+            results['test_90_pretrained_and_finetuned_AUROC_scores'].append(test_90_finetuned_and_pretrained_auc)
+            results['test_85_pretrained_and_finetuned_AUROC_scores'].append(test_85_finetuned_and_pretrained_auc)
+            results['test_80_pretrained_and_finetuned_AUROC_scores'].append(test_80_finetuned_and_pretrained_auc)
         if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015']:
             results['just_test_pretrained_and_finetuned_AUROC_scores'].append(just_test_finetuned_and_pretrained_auc)
     results_pd = pd.DataFrame.from_dict(results)
@@ -1263,3 +1501,5 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None):
     if not os.path.exists(join(BASE_PATH, f'summarize_results/{args["dataset"]}')):
         os.makedirs(join(BASE_PATH, f'summarize_results/{args["dataset"]}'))
     results_pd.to_csv(results_dict_path)
+
+    return results
