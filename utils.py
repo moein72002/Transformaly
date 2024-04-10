@@ -1046,6 +1046,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None, mvtec_category=Non
                    'test_90_pretrained_AUROC_scores': [],
                    'test_85_pretrained_AUROC_scores': [],
                    'test_80_pretrained_AUROC_scores': [],
+                   'eval_using_knn_pretrained_AUROC_scores': [],
                    'all_layers_finetuned_AUROC_scores': [],
                    'test_98_all_layers_finetuned_AUROC_scores': [],
                    'test_95_all_layers_finetuned_AUROC_scores': [],
