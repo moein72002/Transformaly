@@ -42,6 +42,7 @@ from datasets.wbc1 import get_wbc1_train_and_test_dataset_for_anomaly_detection,
 from datasets.wbc2 import get_wbc2_train_and_test_dataset_for_anomaly_detection, get_just_wbc2_test_dataset_for_anomaly_detection
 from datasets.brain_datasets.Br35H import get_br35h_trainset, get_br35h_test_set, get_br35h_just_test
 from datasets.camelyon17_1 import get_camelyon17_trainset, get_camelyon_test_set_id, get_camelyon17_test_set, get_camelyon_test_set_ood, get_camelyon_just_test_shifted
+from datasets.aptos import get_aptos_trainset, get_aptos_test_set, get_aptos_test_set_id, get_aptos_test_set_ood, get_aptos_just_test_shifted
 from datasets.brain_datasets.Brats2015 import get_brats_trainset, get_brats_testset, get_brats_just_test
 from datasets.mvtec import get_mvtec_trainset, get_mvtec_testset_with_padding, get_mvtec_testset_id, get_mvtec_testset_ood
 
@@ -148,7 +149,7 @@ def extract_fetures(base_path,
         else:
             if dataset in ['mvtec']:
                 _classes = [0]
-            elif dataset in ['br35h', 'brats2015', 'camelyon17']:
+            elif dataset in ['br35h', 'brats2015', 'camelyon17', 'aptos']:
                 _classes = [0]
             elif dataset in ['wbc1', 'wbc2']:
                 _classes = [1]
@@ -168,7 +169,7 @@ def extract_fetures(base_path,
                 print_and_add_to_log(f"Class: {_class}", logging)
                 print_and_add_to_log(f"Unimodal setting: {unimodal}", logging)
 
-                assert dataset in ['camelyon17', 'mvtec', 'br35h', 'brats2015', 'wbc1', 'wbc2', 'cifar10', 'cifar100', 'fmnist', 'cats_vs_dogs',
+                assert dataset in ['camelyon17', 'aptos', 'mvtec', 'br35h', 'brats2015', 'wbc1', 'wbc2', 'cifar10', 'cifar100', 'fmnist', 'cats_vs_dogs',
                                    'dior'], f"{dataset} not supported yet!"
                 if unimodal:
                     base_feature_path = join(base_path, f'unimodal/{dataset}/class_{str(_class)}')
@@ -259,6 +260,12 @@ def extract_fetures(base_path,
                     anomaly_targets = testset.labels
                     just_testset = get_camelyon_just_test_shifted()
                     just_test_anomaly_targets = just_testset.labels
+                elif dataset == 'aptos':
+                    trainset = get_aptos_trainset()
+                    testset = get_aptos_test_set()
+                    anomaly_targets = testset.labels
+                    just_testset = get_aptos_just_test_shifted()
+                    just_test_anomaly_targets = just_testset.labels
                 elif dataset == 'wbc1':
                     trainset, testset = get_wbc1_train_and_test_dataset_for_anomaly_detection()
                     anomaly_targets = [0 if label == testset.normal_class_label else 1 for label in testset.targets]
@@ -288,7 +295,7 @@ def extract_fetures(base_path,
                     testset_90_Loader = DataLoader(testset_90, batch_size=BATCH_SIZE, shuffle=False)
                     testset_85_Loader = DataLoader(testset_85, batch_size=BATCH_SIZE, shuffle=False)
                     testset_80_Loader = DataLoader(testset_80, batch_size=BATCH_SIZE, shuffle=False)
-                if dataset in ['wbc1', 'wbc2', 'br35h', 'brats2015', 'camelyon17']:
+                if dataset in ['wbc1', 'wbc2', 'br35h', 'brats2015', 'camelyon17', 'aptos']:
                     just_testsetLoader = DataLoader(just_testset, batch_size=BATCH_SIZE, shuffle=False)
 
 
@@ -330,7 +337,7 @@ def extract_fetures(base_path,
                             test_80_features = get_features(model=model, data_loader=testset_80_Loader)
                             with open(join(extracted_features_path, f'{mvtec_category}_test_80_pretrained_ViT_features.npy'), 'wb') as f:
                                 np.save(f, test_80_features)
-                        if dataset in ['wbc1', 'wbc2', 'br35h', 'brats2015', 'camelyon17']:
+                        if dataset in ['wbc1', 'wbc2', 'br35h', 'brats2015', 'camelyon17', 'aptos']:
                             just_test_features = get_features(model=model, data_loader=just_testsetLoader)
                             with open(join(extracted_features_path, 'just_test_pretrained_ViT_features.npy'), 'wb') as f:
                                 np.save(f, just_test_features)
@@ -358,7 +365,7 @@ def extract_fetures(base_path,
                                 test_85_features = np.load(f)
                             with open(join(extracted_features_path, f'{mvtec_category}_test_80_pretrained_ViT_features.npy'), 'rb') as f:
                                 test_80_features = np.load(f)
-                        if dataset in ['wbc1', 'wbc2', 'br35h', 'brats2015', 'camelyon17']:
+                        if dataset in ['wbc1', 'wbc2', 'br35h', 'brats2015', 'camelyon17', 'aptos']:
                             with open(join(extracted_features_path,
                                            f'just_test_pretrained_ViT_features.npy'), 'rb') as f:
                                 just_test_features = np.load(f)
@@ -372,7 +379,7 @@ def extract_fetures(base_path,
                         test_90_distances = knn_score(train_features, test_90_features, n_neighbours=2)
                         test_85_distances = knn_score(train_features, test_85_features, n_neighbours=2)
                         test_80_distances = knn_score(train_features, test_80_features, n_neighbours=2)
-                    if dataset in ['wbc1', 'wbc2', 'br35h', 'brats2015', 'camelyon17']:
+                    if dataset in ['wbc1', 'wbc2', 'br35h', 'brats2015', 'camelyon17', 'aptos']:
                         just_test_distances = knn_score(train_features, just_test_features, n_neighbours=2)
 
                     # Convert list to set to remove duplicates and count unique elements
@@ -393,7 +400,7 @@ def extract_fetures(base_path,
                         print(f"train mvtec_{mvtec_category}, test mvtec_{mvtec_category}_85 -> AUC: {test_85_auc}")
                         test_80_auc = roc_auc_score(anomaly_targets_80, test_80_distances)
                         print(f"train mvtec_{mvtec_category}, test mvtec_{mvtec_category}_80 -> AUC: {test_80_auc}")
-                    if dataset in ['wbc1', 'wbc2', 'br35h', 'brats2015', 'camelyon17']:
+                    if dataset in ['wbc1', 'wbc2', 'br35h', 'brats2015', 'camelyon17', 'aptos']:
                         just_test_auc = roc_auc_score(just_test_anomaly_targets, just_test_distances)
                         just_test_dataset_name = "wbc2" if dataset == "wbc1" else "wbc1"
                         print(f"train {dataset}, test {just_test_dataset_name} -> AUC: {just_test_auc}")
@@ -611,6 +618,9 @@ def train(model, best_model, args, dataloaders,
                 elif dataset == 'camelyon17':
                     testset = get_camelyon17_test_set()
                     anomaly_targets = testset.labels
+                elif dataset == 'aptos':
+                    testset = get_aptos_test_set()
+                    anomaly_targets = testset.labels
                 elif dataset == 'wbc1':
                     _, testset = get_wbc1_train_and_test_dataset_for_anomaly_detection()
                     anomaly_targets = [0 if label == testset.normal_class_label else 1 for label in testset.targets]
@@ -664,7 +674,7 @@ def train(model, best_model, args, dataloaders,
             pretrained_model_for_test.fc = Identity()
             pretrained_model_for_test.eval()
 
-            if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015', 'mvtec', 'camelyon17']:
+            if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015', 'mvtec', 'camelyon17', 'aptos']:
                 manual_class_num_range = None
             else:
                 manual_class_num_range = [_class]
@@ -782,7 +792,7 @@ def get_number_of_classes(dataset):
     if dataset == 'mvtec':
         number_of_classes = 2
 
-    elif dataset in ['br35h', 'brats2015', 'camelyon17']:
+    elif dataset in ['br35h', 'brats2015', 'camelyon17', 'aptos']:
         number_of_classes = 2
 
     elif dataset in ['wbc1', 'wbc2']:
@@ -1136,6 +1146,12 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None, mvtec_category=Non
             anomaly_targets = testset.labels
             just_testset = get_camelyon_just_test_shifted()
             just_test_anomaly_targets = just_testset.labels
+        elif args['dataset'] == 'aptos':
+            trainset = get_aptos_trainset()
+            testset = get_aptos_test_set()
+            anomaly_targets = testset.labels
+            just_testset = get_aptos_just_test_shifted()
+            just_test_anomaly_targets = just_testset.labels
         elif args['dataset'] == 'wbc1':
             trainset, testset = get_wbc1_train_and_test_dataset_for_anomaly_detection()
             anomaly_targets = [0 if label == testset.normal_class_label else 1 for label in testset.targets]
@@ -1165,7 +1181,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None, mvtec_category=Non
             test_90_loader = torch.utils.data.DataLoader(testset_90, batch_size=args['batch_size'], shuffle=False)
             test_85_loader = torch.utils.data.DataLoader(testset_85, batch_size=args['batch_size'], shuffle=False)
             test_80_loader = torch.utils.data.DataLoader(testset_80, batch_size=args['batch_size'], shuffle=False)
-        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015', 'camelyon17']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015', 'camelyon17', 'aptos']:
             just_test_loader = torch.utils.data.DataLoader(just_testset,
                                                            batch_size=args['batch_size'],
                                                            shuffle=False)
@@ -1207,7 +1223,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None, mvtec_category=Non
                            f'{args["dataset"]}/class_{args["_class"]}/extracted_features',
                            f'{mvtec_category}_test_80_pretrained_ViT_features.npy'), 'rb') as f:
                 test_80_features = np.load(f)
-        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015', 'camelyon17']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015', 'camelyon17', 'aptos']:
             with open(join(BASE_PATH, f'{"unimodal" if args["unimodal"] else "multimodal"}',
                            f'{args["dataset"]}/class_{args["_class"]}/extracted_features',
                            'just_test_pretrained_ViT_features.npy'), 'rb') as f:
@@ -1238,7 +1254,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None, mvtec_category=Non
             test_90_features = np.ascontiguousarray(pca.transform(test_90_features))
             test_85_features = np.ascontiguousarray(pca.transform(test_85_features))
             test_80_features = np.ascontiguousarray(pca.transform(test_80_features))
-        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015', 'camelyon17']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015', 'camelyon17', 'aptos']:
             just_test_features = np.ascontiguousarray(pca.transform(just_test_features))
         print_and_add_to_log("Whitening ended", logging)
 
@@ -1255,7 +1271,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None, mvtec_category=Non
             test_90_pretrained_samples_likelihood = dens_model.score_samples(test_90_features)
             test_85_pretrained_samples_likelihood = dens_model.score_samples(test_85_features)
             test_80_pretrained_samples_likelihood = dens_model.score_samples(test_80_features)
-        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'brats2015']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'brats2015', 'aptos']:
             just_test_pretrained_samples_likelihood = dens_model.score_samples(just_test_features)
         print_and_add_to_log("----------------------", logging)
 
@@ -1269,7 +1285,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None, mvtec_category=Non
             test_90_pretrained_auc = roc_auc_score(anomaly_targets_90, -test_90_pretrained_samples_likelihood)
             test_85_pretrained_auc = roc_auc_score(anomaly_targets_85, -test_85_pretrained_samples_likelihood)
             test_80_pretrained_auc = roc_auc_score(anomaly_targets_80, -test_80_pretrained_samples_likelihood)
-        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'brats2015']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'aptos', 'brats2015']:
             just_test_pretrained_auc = roc_auc_score(just_test_anomaly_targets, -just_test_pretrained_samples_likelihood)
             just_test_eval_using_knn_distances = knn_score(train_features, just_test_features, n_neighbours=2)
             just_test_eval_using_knn_auc = roc_auc_score(just_test_anomaly_targets, just_test_eval_using_knn_distances)
@@ -1284,7 +1300,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None, mvtec_category=Non
             results['test_90_pretrained_AUROC_scores'].append(test_90_pretrained_auc)
             results['test_85_pretrained_AUROC_scores'].append(test_85_pretrained_auc)
             results['test_80_pretrained_AUROC_scores'].append(test_80_pretrained_auc)
-        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'brats2015']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'aptos', 'brats2015']:
             results['just_test_pretrained_AUROC_scores'].append(just_test_pretrained_auc)
             results['just_test_using_knn_pretrained_AUROC_scores'].append(just_test_eval_using_knn_auc)
 
@@ -1296,7 +1312,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None, mvtec_category=Non
             TEST_90_FINETUNED_PREDICTION_FILE_NAME = 'full_test_90_finetuned_scores.npy'
             TEST_85_FINETUNED_PREDICTION_FILE_NAME = 'full_test_85_finetuned_scores.npy'
             TEST_80_FINETUNED_PREDICTION_FILE_NAME = 'full_test_80_finetuned_scores.npy'
-        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'brats2015']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'aptos', 'brats2015']:
             JUST_TEST_FINETUNED_PREDICTION_FILE_NAME = 'just_full_test_finetuned_scores.npy'
 
         if args['use_imagenet']:
@@ -1334,7 +1350,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None, mvtec_category=Non
                 test_90_finetuned_features = get_finetuned_features(model=model, loader=test_90_loader)
                 test_85_finetuned_features = get_finetuned_features(model=model, loader=test_85_loader)
                 test_80_finetuned_features = get_finetuned_features(model=model, loader=test_80_loader)
-            if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'brats2015']:
+            if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'aptos', 'brats2015']:
                 just_test_finetuned_features = get_finetuned_features(model=model, loader=just_test_loader)
 
             if not os.path.exists(join(base_feature_path, 'features_distances')):
@@ -1347,7 +1363,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None, mvtec_category=Non
                 np.save(join(base_feature_path, 'features_distances', TEST_90_FINETUNED_PREDICTION_FILE_NAME), test_90_finetuned_features)
                 np.save(join(base_feature_path, 'features_distances', TEST_85_FINETUNED_PREDICTION_FILE_NAME), test_85_finetuned_features)
                 np.save(join(base_feature_path, 'features_distances', TEST_80_FINETUNED_PREDICTION_FILE_NAME), test_80_finetuned_features)
-            if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'brats2015']:
+            if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'aptos', 'brats2015']:
                 np.save(join(base_feature_path, 'features_distances', JUST_TEST_FINETUNED_PREDICTION_FILE_NAME),
                         just_test_finetuned_features)
 
@@ -1360,7 +1376,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None, mvtec_category=Non
                 test_90_finetuned_features = np.load(join(base_feature_path, 'features_distances', TEST_90_FINETUNED_PREDICTION_FILE_NAME))
                 test_85_finetuned_features = np.load(join(base_feature_path, 'features_distances', TEST_85_FINETUNED_PREDICTION_FILE_NAME))
                 test_80_finetuned_features = np.load(join(base_feature_path, 'features_distances', TEST_80_FINETUNED_PREDICTION_FILE_NAME))
-            if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'brats2015']:
+            if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'aptos', 'brats2015']:
                 just_test_finetuned_features = np.load(join(base_feature_path, 'features_distances', JUST_TEST_FINETUNED_PREDICTION_FILE_NAME))
 
         if test_finetuned_features.shape[0] == 1:
@@ -1377,7 +1393,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None, mvtec_category=Non
                 test_85_finetuned_features = test_85_finetuned_features[0]
             if test_80_finetuned_features.shape[0] == 1:
                 test_80_finetuned_features = test_80_finetuned_features[0]
-        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'brats2015']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'aptos', 'brats2015']:
             if just_test_finetuned_features.shape[0] == 1:
                 just_test_finetuned_features = just_test_finetuned_features[0]
 
@@ -1426,7 +1442,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None, mvtec_category=Non
             test_90_finetuned_features = test_90_finetuned_features[:, args['use_layer_outputs']]
             test_85_finetuned_features = test_85_finetuned_features[:, args['use_layer_outputs']]
             test_80_finetuned_features = test_80_finetuned_features[:, args['use_layer_outputs']]
-        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'brats2015']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'aptos', 'brats2015']:
             just_test_finetuned_features = just_test_finetuned_features[:, args['use_layer_outputs']]
 
         gmm_scores = []
@@ -1443,7 +1459,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None, mvtec_category=Non
             test_90_finetuned_samples_likelihood = gmm.score_samples(test_90_finetuned_features)
             test_85_finetuned_samples_likelihood = gmm.score_samples(test_85_finetuned_features)
             test_80_finetuned_samples_likelihood = gmm.score_samples(test_80_finetuned_features)
-        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'brats2015']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'aptos', 'brats2015']:
             just_test_finetuned_samples_likelihood = gmm.score_samples(just_test_finetuned_features)
         # train_finetuned_samples_likelihood = gmm.score_samples(train_finetuned_features)
         # max_train_finetuned_features = np.max(np.abs(train_finetuned_samples_likelihood), axis=0)
@@ -1463,7 +1479,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None, mvtec_category=Non
             print_and_add_to_log(f"test_85 all Block outputs prediciton AUROC score is: {test_85_finetuned_auc}", logging)
             test_80_finetuned_auc = roc_auc_score(anomaly_targets_80, -test_80_finetuned_samples_likelihood)
             print_and_add_to_log(f"test_80 all Block outputs prediciton AUROC score is: {test_80_finetuned_auc}", logging)
-        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'brats2015']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'aptos', 'brats2015']:
             just_test_finetuned_auc = roc_auc_score(just_test_anomaly_targets, -just_test_finetuned_samples_likelihood)
             print_and_add_to_log(f"Just test all Block outputs prediciton AUROC score is: {just_test_finetuned_auc}", logging)
         results['all_layers_finetuned_AUROC_scores'].append(test_finetuned_auc)
@@ -1473,7 +1489,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None, mvtec_category=Non
             results['test_90_all_layers_finetuned_AUROC_scores'].append(test_90_finetuned_auc)
             results['test_85_all_layers_finetuned_AUROC_scores'].append(test_85_finetuned_auc)
             results['test_80_all_layers_finetuned_AUROC_scores'].append(test_80_finetuned_auc)
-        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'brats2015']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'aptos', 'brats2015']:
             results['just_test_all_layers_finetuned_AUROC_scores'].append(just_test_finetuned_auc)
 
         print_and_add_to_log("----------------------", logging)
@@ -1497,7 +1513,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None, mvtec_category=Non
             test_80_finetuned_and_pretrained_samples_likelihood = np.array([
                 test_80_finetuned_samples_likelihood[i] + test_80_pretrained_samples_likelihood[i] for i in
                 range(len(test_80_pretrained_samples_likelihood))])
-        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'brats2015']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'aptos', 'brats2015']:
             just_test_finetuned_and_pretrained_samples_likelihood = np.array([
                 just_test_finetuned_samples_likelihood[i] + just_test_pretrained_samples_likelihood[i] for i in
                 range(len(just_test_pretrained_samples_likelihood))])
@@ -1509,7 +1525,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None, mvtec_category=Non
             test_90_finetuned_and_pretrained_auc = roc_auc_score(anomaly_targets_90, -test_90_finetuned_and_pretrained_samples_likelihood)
             test_85_finetuned_and_pretrained_auc = roc_auc_score(anomaly_targets_85, -test_85_finetuned_and_pretrained_samples_likelihood)
             test_80_finetuned_and_pretrained_auc = roc_auc_score(anomaly_targets_80, -test_80_finetuned_and_pretrained_samples_likelihood)
-        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'brats2015']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'aptos', 'brats2015']:
             just_test_finetuned_and_pretrained_auc = roc_auc_score(just_test_anomaly_targets, -just_test_finetuned_and_pretrained_samples_likelihood)
         print_and_add_to_log(
             f"The bgm and output prediction prediciton AUROC is: {finetuned_and_pretrained_auc}",
@@ -1520,7 +1536,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None, mvtec_category=Non
             print_and_add_to_log(f"test_90: the bgm and output prediction prediciton AUROC is: {test_90_finetuned_and_pretrained_auc}", logging)
             print_and_add_to_log(f"test_85: the bgm and output prediction prediciton AUROC is: {test_85_finetuned_and_pretrained_auc}", logging)
             print_and_add_to_log(f"test_80: the bgm and output prediction prediciton AUROC is: {test_80_finetuned_and_pretrained_auc}", logging)
-        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'brats2015']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'aptos', 'brats2015']:
             print_and_add_to_log(
                 f"Just test: the bgm and output prediction prediciton AUROC is: {just_test_finetuned_and_pretrained_auc}",
                 logging)
@@ -1532,7 +1548,7 @@ def evaluate_method(args=None, BASE_PATH=None, _classes=None, mvtec_category=Non
             results['test_90_pretrained_and_finetuned_AUROC_scores'].append(test_90_finetuned_and_pretrained_auc)
             results['test_85_pretrained_and_finetuned_AUROC_scores'].append(test_85_finetuned_and_pretrained_auc)
             results['test_80_pretrained_and_finetuned_AUROC_scores'].append(test_80_finetuned_and_pretrained_auc)
-        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'brats2015']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'camelyon17', 'aptos', 'brats2015']:
             results['just_test_pretrained_and_finetuned_AUROC_scores'].append(just_test_finetuned_and_pretrained_auc)
     results_pd = pd.DataFrame.from_dict(results)
     print(f"all_results: {results}")
