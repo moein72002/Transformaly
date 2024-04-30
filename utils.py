@@ -648,7 +648,7 @@ def train(model, best_model, args, dataloaders,
                     print("--------------------------------------------------------")
             model = model.train()
 
-        if args['test_every_epoch']:
+        if args['test_every_epoch'] and (epoch - 1) % args['eval_every'] == 0:
             # save models
             torch.save(best_model.state_dict(), join(output_path,
                                                      'best_full_finetuned_model_state_dict.pkl'))
