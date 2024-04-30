@@ -93,7 +93,7 @@ def knn_score(train_set, test_set, n_neighbours=2):
 
 def get_features(model, data_loader, early_break=-1):
     pretrained_features = []
-    for i, (data, _) in enumerate(tqdm(data_loader)):
+    for i, (data, _) in enumerate(data_loader):
         if early_break > 0 and early_break < i:
             break
 
@@ -459,7 +459,7 @@ def forward_one_epoch(loader,
                       ):
     losses = []
 
-    for batch_idx, (inputs, targets) in enumerate(tqdm(loader)):
+    for batch_idx, (inputs, targets) in enumerate(loader):
 
         if mode == Mode.training:
             optimizer.zero_grad()
