@@ -16,7 +16,7 @@ from collections import defaultdict
 import re
 from datasets.camelyon17_1 import get_camelyon17_trainset, get_camelyon17_test_set, get_camelyon_test_set_id, get_camelyon_test_set_ood, get_camelyon_just_test_shifted
 from datasets.isic import get_isic_trainset, get_isic_test_set, get_isic_test_set_id, get_isic_test_set_ood, get_isic_just_test_shifted
-from datasets.aptos import get_aptos_trainset, get_aptos_test_set, get_aptos_test_set_id, get_aptos_test_set_ood, get_aptos_just_test_shifted
+from datasets.waterbird import get_waterbird_trainset, get_waterbird_test_set, get_waterbird_test_set_id, get_waterbird_test_set_ood, get_waterbird_just_test_shifted
 from datasets.wbc1 import get_wbc1_train_and_test_dataset_for_anomaly_detection, get_wbc1_id_test_dataset, get_wbc1_ood_test_dataset, get_just_wbc1_test_dataset_for_anomaly_detection
 from datasets.wbc2 import get_wbc2_train_and_test_dataset_for_anomaly_detection, get_wbc2_id_test_dataset, get_wbc2_ood_test_dataset, get_just_wbc2_test_dataset_for_anomaly_detection
 from datasets.brain_datasets.Br35H import prepare_br35h_dataset_files, get_br35h_trainset, get_br35h_test_set_id, get_br35h_test_set_ood, get_br35h_just_test
@@ -36,7 +36,7 @@ def train_model(args, all_results_dict, mvtec_category=None):
         prepare_brats2015_dataset_files()
     elif args['dataset'] in ['camelyon17']:
         _classes = [0]
-    elif args['dataset'] in ['aptos', 'isic']:
+    elif args['dataset'] in ['waterbird', 'isic']:
         _classes = [0]
     elif args['dataset'] in ['wbc1', 'wbc2']:
         _classes = [1]
@@ -121,10 +121,10 @@ def train_model(args, all_results_dict, mvtec_category=None):
             trainset = get_camelyon17_trainset()
             testset = get_camelyon_test_set_id()
             ood_test_set = get_camelyon_test_set_ood()
-        elif args['dataset'] == 'aptos':
-            trainset = get_aptos_trainset()
-            testset = get_aptos_test_set()
-            ood_test_set = get_aptos_test_set_ood()
+        elif args['dataset'] == 'waterbird':
+            trainset = get_waterbird_trainset()
+            testset = get_waterbird_test_set()
+            ood_test_set = get_waterbird_test_set_ood()
         elif args['dataset'] == 'isic':
             trainset = get_isic_trainset()
             testset = get_isic_test_set()
@@ -145,7 +145,7 @@ def train_model(args, all_results_dict, mvtec_category=None):
                                                      normal_test_sample_only=True,
                                                      use_imagenet=args['use_imagenet']
                                                      )
-        if not args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015', 'mvtec', 'camelyon17', 'aptos', 'isic']:
+        if not args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015', 'mvtec', 'camelyon17', 'waterbird', 'isic']:
             _, ood_test_set = get_datasets_for_ViT(dataset=args['dataset'],
                                                    data_path=args['data_path'],
                                                    one_vs_rest=not args['unimodal'],
@@ -245,7 +245,7 @@ def train_model(args, all_results_dict, mvtec_category=None):
         model.fc = Identity()
         model.eval()
 
-        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015', 'camelyon17', 'aptos', 'isic']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015', 'camelyon17', 'waterbird', 'isic']:
             manual_class_num_range = None
         else:
             manual_class_num_range = [_class]
