@@ -94,6 +94,8 @@ class Waterbird(Dataset):
         image = image.convert('RGB')
         if self.transform is not None:
             image = self.transform(image)
+        if self.train:
+            return image, 0
         return image, self.labels[index]
 
     def __len__(self):
