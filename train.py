@@ -15,6 +15,7 @@ from pytorch_pretrained_vit.model import AnomalyViT, ViT
 from collections import defaultdict
 import re
 from datasets.camelyon17_1 import get_camelyon17_trainset, get_camelyon17_test_set, get_camelyon_test_set_id, get_camelyon_test_set_ood, get_camelyon_just_test_shifted
+from datasets.isic import get_isic_trainset, get_isic_test_set, get_isic_test_set_id, get_isic_test_set_ood, get_isic_just_test_shifted
 from datasets.aptos import get_aptos_trainset, get_aptos_test_set, get_aptos_test_set_id, get_aptos_test_set_ood, get_aptos_just_test_shifted
 from datasets.wbc1 import get_wbc1_train_and_test_dataset_for_anomaly_detection, get_wbc1_id_test_dataset, get_wbc1_ood_test_dataset, get_just_wbc1_test_dataset_for_anomaly_detection
 from datasets.wbc2 import get_wbc2_train_and_test_dataset_for_anomaly_detection, get_wbc2_id_test_dataset, get_wbc2_ood_test_dataset, get_just_wbc2_test_dataset_for_anomaly_detection
@@ -35,7 +36,7 @@ def train_model(args, all_results_dict, mvtec_category=None):
         prepare_brats2015_dataset_files()
     elif args['dataset'] in ['camelyon17']:
         _classes = [0]
-    elif args['dataset'] in ['aptos']:
+    elif args['dataset'] in ['aptos', 'isic']:
         _classes = [0]
     elif args['dataset'] in ['wbc1', 'wbc2']:
         _classes = [1]
@@ -124,6 +125,10 @@ def train_model(args, all_results_dict, mvtec_category=None):
             trainset = get_aptos_trainset()
             testset = get_aptos_test_set()
             ood_test_set = get_aptos_test_set_ood()
+        elif args['dataset'] == 'isic':
+            trainset = get_isic_trainset()
+            testset = get_isic_test_set()
+            ood_test_set = get_isic_test_set_ood()
         elif args['dataset'] == 'wbc1':
             trainset, _ = get_wbc1_train_and_test_dataset_for_anomaly_detection()
             testset = get_wbc1_id_test_dataset()
@@ -140,7 +145,7 @@ def train_model(args, all_results_dict, mvtec_category=None):
                                                      normal_test_sample_only=True,
                                                      use_imagenet=args['use_imagenet']
                                                      )
-        if not args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015', 'mvtec', 'camelyon17', 'aptos']:
+        if not args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015', 'mvtec', 'camelyon17', 'aptos', 'isic']:
             _, ood_test_set = get_datasets_for_ViT(dataset=args['dataset'],
                                                    data_path=args['data_path'],
                                                    one_vs_rest=not args['unimodal'],
@@ -240,7 +245,7 @@ def train_model(args, all_results_dict, mvtec_category=None):
         model.fc = Identity()
         model.eval()
 
-        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015', 'camelyon17', 'aptos']:
+        if args['dataset'] in ['wbc1', 'wbc2', 'br35h', 'brats2015', 'camelyon17', 'aptos', 'isic']:
             manual_class_num_range = None
         else:
             manual_class_num_range = [_class]
