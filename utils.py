@@ -496,7 +496,7 @@ def forward_one_epoch(loader,
 
 def train(model, best_model, args, dataloaders,
           model_checkpoint_path,
-          output_path, device='cuda',
+          output_path, device='cuda:0',
           seed=42, anomaly_classes=None, dataset=None, _class=None, BASE_PATH=None, eval_classes=None, all_results_dict=None, mvtec_category=None):
     torch.manual_seed(0)
     if torch.cuda.is_available():
