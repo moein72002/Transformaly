@@ -77,17 +77,17 @@ class Waterbird(Dataset):
                     self.labels.append(all_paths[i][1])
 
         if count != -1:
-            if count < len(self.image_files):
-                self.image_files = self.image_files[:count]
+            if count < len(self.image_paths):
+                self.image_paths = self.image_paths[:count]
                 self.labels = self.labels[:count]
             else:
-                t = len(self.image_files)
+                t = len(self.image_paths)
                 for i in range(count - t):
-                    self.image_files.append(random.choice(self.image_files[:t]))
+                    self.image_paths.append(random.choice(self.image_paths[:t]))
                     self.labels.append(random.choice(self.labels[:t]))
 
     def __getitem__(self, index):
-        image_file = self.image_files[index]
+        image_file = self.image_paths[index]
         image = Image.open(image_file)
         image = image.convert('RGB')
         if self.transform is not None:
@@ -95,7 +95,7 @@ class Waterbird(Dataset):
         return image, self.labels[index]
 
     def __len__(self):
-        return len(self.image_files)
+        return len(self.image_paths)
 
 
 def get_waterbird_trainset():
