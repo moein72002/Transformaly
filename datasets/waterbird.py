@@ -67,7 +67,7 @@ class Waterbird(Dataset):
             elif mode == 'bg_land':
                 dff = df[(df['place'] == 0)]
             elif mode == 'ood':
-                dff = df[(df['place'] == 0 & df['y'] == 1)]
+                dff = df[(df['place'] == 0) & (df['y'] == 1)]
             else:
                 print('Wrong mode!')
                 raise ValueError('Wrong bg mode!')
