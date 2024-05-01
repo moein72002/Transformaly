@@ -36,6 +36,8 @@ class Waterbird(Dataset):
         root = '/kaggle/input/waterbird/waterbird'
         df = pd.read_csv(os.path.join(root, 'metadata.csv'))
 
+        print(len(df))
+
         self.train = train
         self.df = df
         lb_on_l = df[(df['y'] == 0) & (df['place'] == 0)]
