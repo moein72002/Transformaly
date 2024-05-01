@@ -99,6 +99,16 @@ class Br35H_Dataset(Dataset):
 
 def get_br35h_trainset():
     train_normal_path = glob('./Br35H/dataset/train/normal/*')
+
+    brats_mod = glob('./brats/dataset/train/normal/*')
+
+    random.seed(1)
+
+    random_brats_images = random.sample(brats_mod, 150)
+    train_normal_path.extend(random_brats_images)
+
+    print('added 150 normal brat images')
+
     train_label = [0]*len(train_normal_path)
     print(f"len(train_normal_path): {len(train_normal_path)}")
 
