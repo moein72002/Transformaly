@@ -57,8 +57,10 @@ def get_camelyon17_trainset():
     node0_train = glob('/kaggle/input/camelyon17-clean/node0/train/normal/*')
     node1_train = glob('/kaggle/input/camelyon17-clean/node1/train/normal/*')
     node2_train = glob('/kaggle/input/camelyon17-clean/node2/train/normal/*')
-    
+    random.seed(1)
+
     train_normal_path = node0_train + node1_train + node2_train
+    train_normal_path = random.sample(train_normal_path, 20000)
     train_label = [0] * len(train_normal_path)
     print(f"len(train_normal_path): {len(train_normal_path)}")
 
@@ -81,7 +83,13 @@ def get_camelyon17_test_set():
     node2_test_anomaly = glob('/kaggle/input/camelyon17-clean/node2/test/anomaly/*')
 
     test_path_normal = node0_test_normal + node1_test_normal + node2_test_normal
+    random.seed(1)
+    test_path_normal = random.sample(test_path_normal, 5000)
+
     test_path_anomaly = node0_test_anomaly + node1_test_anomaly + node2_test_anomaly
+    random.seed(1)
+
+    test_path_anomaly = random.sample(test_path_anomaly, 5000)
 
     test_path = test_path_normal + test_path_anomaly
     test_label = [0]*len(test_path_normal) + [1]*len(test_path_anomaly)
@@ -100,8 +108,11 @@ def get_camelyon_test_set_id():
     node0_test_normal = glob('/kaggle/input/camelyon17-clean/node0/test/normal/*')
     node1_test_normal = glob('/kaggle/input/camelyon17-clean/node1/test/normal/*')
     node2_test_normal = glob('/kaggle/input/camelyon17-clean/node2/test/normal/*')
+    random.seed(1)
 
     test_path = node0_test_normal + node1_test_normal + node2_test_normal
+    test_path = random.sample(test_path, 5000)
+
     test_label = [0] * len(test_path)
     print(f"len(test_label): {len(test_label)}")
     print(f"len(test_path): {len(test_path)}")
@@ -118,8 +129,10 @@ def get_camelyon_test_set_ood():
     node0_test_anomaly = glob('/kaggle/input/camelyon17-clean/node0/test/anomaly/*')
     node1_test_anomaly = glob('/kaggle/input/camelyon17-clean/node1/test/anomaly/*')
     node2_test_anomaly = glob('/kaggle/input/camelyon17-clean/node2/test/anomaly/*')
+    random.seed(1)
 
     test_path = node0_test_anomaly + node1_test_anomaly + node2_test_anomaly
+    test_path = random.sample(test_path, 5000)
     test_label = [1]*len(test_path)
     print(f"len(test_label): {len(test_label)}")
     print(f"len(test_path): {len(test_path)}")
@@ -138,8 +151,14 @@ def get_camelyon_just_test_shifted():
 
     node4_test_normal = glob('/kaggle/input/camelyon17-clean/node4/test/normal/*')
     node4_test_anomaly = glob('/kaggle/input/camelyon17-clean/node4/test/anomaly/*')
+    random.seed(1)
+
     shifted_test_path_normal = node3_test_normal + node4_test_normal
+    shifted_test_path_normal = random.sample(shifted_test_path_normal, 5000)
+    random.seed(1)
+
     shifted_test_path_anomaly = node3_test_anomaly + node4_test_anomaly
+    shifted_test_path_anomaly = random.sample(shifted_test_path_anomaly, 5000)
 
     test_path = shifted_test_path_normal + shifted_test_path_anomaly
     test_label = [0] * len(shifted_test_path_normal) + [1] * len(shifted_test_path_anomaly)
