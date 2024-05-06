@@ -104,10 +104,10 @@ def get_br35h_trainset():
 
     random.seed(1)
 
-    random_brats_images = random.sample(brats_mod, 150)
+    random_brats_images = random.sample(brats_mod, 50)
     train_normal_path.extend(random_brats_images)
 
-    print('added 150 normal brat images')
+    print('added 50 normal brat images')
 
     train_label = [0]*len(train_normal_path)
     print(f"len(train_normal_path): {len(train_normal_path)}")
