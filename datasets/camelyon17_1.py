@@ -18,8 +18,8 @@ from torch.utils.data.dataset import Subset
 from torchvision.transforms import Compose
 from visualize.visualize_dataset import visualize_random_samples_from_clean_dataset
 from visualize.count_labels import count_unique_labels_of_dataset
-
-class Camelyon17(Dataset):
+import pickle
+class Mnist(Dataset):
     def __init__(self, image_path, labels, count=-1):
         use_imagenet = True
         val_transforms_list = [
@@ -43,9 +43,9 @@ class Camelyon17(Dataset):
                     self.labels.append(random.choice(self.labels[:t]))
 
     def __getitem__(self, index):
-        image_file = self.image_files[index]
-        image = Image.open(image_file)
-        image = image.convert('RGB')
+        image = self.image_files[index]
+        image = Image.fromarray(image.transpose(1, 2, 0))
+
         if self.transform is not None:
             image = self.transform(image)
         return image, self.labels[index]
@@ -54,122 +54,75 @@ class Camelyon17(Dataset):
         return len(self.image_files)
 
 def get_camelyon17_trainset():
-    node0_train = glob('/kaggle/input/camelyon17-clean/node0/train/normal/*')
-    node1_train = glob('/kaggle/input/camelyon17-clean/node1/train/normal/*')
-    node2_train = glob('/kaggle/input/camelyon17-clean/node2/train/normal/*')
-    random.seed(1)
+    with open('./content/mnist_shifted_dataset/train_normal.pkl', 'rb') as f:
+        normal_train = pickle.load(f)
+    images = normal_train['images']
+    labels = [0] * len(images)
 
-    train_normal_path = node0_train + node1_train + node2_train
-    train_normal_path = random.sample(train_normal_path, 20000)
-    train_label = [0] * len(train_normal_path)
-    print(f"len(train_normal_path): {len(train_normal_path)}")
-
-    camelyon17_trainset = Camelyon17(image_path=train_normal_path, labels=train_label)
+    camelyon17_trainset = Mnist(image_path=images, labels=labels)
     print("train_set shapes: ", camelyon17_trainset[0][0].shape)
 
-    count_unique_labels_of_dataset(camelyon17_trainset, "camelyon17 train")
-    visualize_random_samples_from_clean_dataset(camelyon17_trainset, "camelyon17 train")
+    count_unique_labels_of_dataset(camelyon17_trainset, "mnist train")
+    visualize_random_samples_from_clean_dataset(camelyon17_trainset, "mnist train")
 
     return camelyon17_trainset
 
 def get_camelyon17_test_set():
-    node0_test_normal = glob('/kaggle/input/camelyon17-clean/node0/test/normal/*')
-    node0_test_anomaly = glob('/kaggle/input/camelyon17-clean/node0/test/anomaly/*')
+    with open('./content/mnist_shifted_dataset/test_normal_main.pkl', 'rb') as f:
+        normal_test = pickle.load(f)
+    with open('./content/mnist_shifted_dataset/test_abnormal_main.pkl', 'rb') as f:
+        abnormal_test = pickle.load(f)
+    images = normal_test['images'] + abnormal_test['images']
+    labels = [0] * len(normal_test['images']) + [1] * len(abnormal_test['images'])
 
-    node1_test_normal = glob('/kaggle/input/camelyon17-clean/node1/test/normal/*')
-    node1_test_anomaly = glob('/kaggle/input/camelyon17-clean/node1/test/anomaly/*')
-
-    node2_test_normal = glob('/kaggle/input/camelyon17-clean/node2/test/normal/*')
-    node2_test_anomaly = glob('/kaggle/input/camelyon17-clean/node2/test/anomaly/*')
-
-    test_path_normal = node0_test_normal + node1_test_normal + node2_test_normal
-    random.seed(1)
-    test_path_normal = random.sample(test_path_normal, 5000)
-
-    test_path_anomaly = node0_test_anomaly + node1_test_anomaly + node2_test_anomaly
-    random.seed(1)
-
-    test_path_anomaly = random.sample(test_path_anomaly, 5000)
-
-    test_path = test_path_normal + test_path_anomaly
-    test_label = [0]*len(test_path_normal) + [1]*len(test_path_anomaly)
-    print(f"len(test_label): {len(test_label)}")
-    print(f"len(test_path): {len(test_path)}")
-
-    camelyon17_trainset = Camelyon17(image_path=test_path, labels=test_label)
+    camelyon17_trainset = Mnist(image_path=images, labels=labels)
     print("test_set shapes: ", camelyon17_trainset[0][0].shape)
 
-    count_unique_labels_of_dataset(camelyon17_trainset, "camelyon17_trainset")
-    visualize_random_samples_from_clean_dataset(camelyon17_trainset, "camelyon17_trainset")
+    count_unique_labels_of_dataset(camelyon17_trainset, "mnist_trainset")
+    visualize_random_samples_from_clean_dataset(camelyon17_trainset, "mnist_trainset")
 
     return camelyon17_trainset
 
 def get_camelyon_test_set_id():
-    node0_test_normal = glob('/kaggle/input/camelyon17-clean/node0/test/normal/*')
-    node1_test_normal = glob('/kaggle/input/camelyon17-clean/node1/test/normal/*')
-    node2_test_normal = glob('/kaggle/input/camelyon17-clean/node2/test/normal/*')
-    random.seed(1)
-
-    test_path = node0_test_normal + node1_test_normal + node2_test_normal
-    test_path = random.sample(test_path, 5000)
-
+    with open('./content/mnist_shifted_dataset/test_normal_main.pkl', 'rb') as f:
+        normal_test = pickle.load(f)
+    test_path = normal_test['images']
     test_label = [0] * len(test_path)
-    print(f"len(test_label): {len(test_label)}")
-    print(f"len(test_path): {len(test_path)}")
 
-    camelyon17_trainset_id = Camelyon17(image_path=test_path, labels=test_label)
+    camelyon17_trainset_id = Mnist(image_path=test_path, labels=test_label)
     print("test_set shapes: ", camelyon17_trainset_id[0][0].shape)
 
-    count_unique_labels_of_dataset(camelyon17_trainset_id, "camelyon17_trainset_id")
-    visualize_random_samples_from_clean_dataset(camelyon17_trainset_id, "camelyon17_trainset_id")
+    count_unique_labels_of_dataset(camelyon17_trainset_id, "mnist_trainset_id")
+    visualize_random_samples_from_clean_dataset(camelyon17_trainset_id, "mnist_trainset_id")
 
     return camelyon17_trainset_id
 
 def get_camelyon_test_set_ood():
-    node0_test_anomaly = glob('/kaggle/input/camelyon17-clean/node0/test/anomaly/*')
-    node1_test_anomaly = glob('/kaggle/input/camelyon17-clean/node1/test/anomaly/*')
-    node2_test_anomaly = glob('/kaggle/input/camelyon17-clean/node2/test/anomaly/*')
-    random.seed(1)
+    with open('./content/mnist_shifted_dataset/test_abnormal_main.pkl', 'rb') as f:
+        normal_test = pickle.load(f)
+    test_path = normal_test['images']
+    test_label = [0] * len(test_path)
 
-    test_path = node0_test_anomaly + node1_test_anomaly + node2_test_anomaly
-    test_path = random.sample(test_path, 5000)
-    test_label = [1]*len(test_path)
-    print(f"len(test_label): {len(test_label)}")
-    print(f"len(test_path): {len(test_path)}")
-
-    camelyon17_trainset_ood = Camelyon17(image_path=test_path, labels=test_label)
+    camelyon17_trainset_ood = Mnist(image_path=test_path, labels=test_label)
     print("test_set shapes: ", camelyon17_trainset_ood[0][0].shape)
 
-    count_unique_labels_of_dataset(camelyon17_trainset_ood, "camelyon17_trainset_ood")
-    visualize_random_samples_from_clean_dataset(camelyon17_trainset_ood, "camelyon17_trainset_ood")
+    count_unique_labels_of_dataset(camelyon17_trainset_ood, "mnist_trainset_ood")
+    visualize_random_samples_from_clean_dataset(camelyon17_trainset_ood, "mnist_trainset_ood")
 
     return camelyon17_trainset_ood
 
 def get_camelyon_just_test_shifted():
-    node3_test_normal = glob('/kaggle/input/camelyon17-clean/node3/test/normal/*')
-    node3_test_anomaly = glob('/kaggle/input/camelyon17-clean/node3/test/anomaly/*')
+    with open('./content/mnist_shifted_dataset/test_normal_shifted.pkl', 'rb') as f:
+        normal_test = pickle.load(f)
+    with open('./content/mnist_shifted_dataset/test_abnormal_shifted.pkl', 'rb') as f:
+        abnormal_test = pickle.load(f)
+    images = normal_test['images'] + abnormal_test['images']
+    labels = [0] * len(normal_test['images']) + [1] * len(abnormal_test['images'])
 
-    node4_test_normal = glob('/kaggle/input/camelyon17-clean/node4/test/normal/*')
-    node4_test_anomaly = glob('/kaggle/input/camelyon17-clean/node4/test/anomaly/*')
-    random.seed(1)
-
-    shifted_test_path_normal = node3_test_normal + node4_test_normal
-    shifted_test_path_normal = random.sample(shifted_test_path_normal, 5000)
-    random.seed(1)
-
-    shifted_test_path_anomaly = node3_test_anomaly + node4_test_anomaly
-    shifted_test_path_anomaly = random.sample(shifted_test_path_anomaly, 5000)
-
-    test_path = shifted_test_path_normal + shifted_test_path_anomaly
-    test_label = [0] * len(shifted_test_path_normal) + [1] * len(shifted_test_path_anomaly)
-
-    print(f"len(test_label_shifted): {len(test_label)}")
-    print(f"len(test_path_shifted): {len(test_path)}")
-
-    camelyon17_just_testset = Camelyon17(image_path=test_path, labels=test_label)
+    camelyon17_just_testset = Mnist(image_path=images, labels=labels)
     print("test_set shapes: ", camelyon17_just_testset[0][0].shape)
 
-    count_unique_labels_of_dataset(camelyon17_just_testset, "camelyon17_testset_shifted")
-    visualize_random_samples_from_clean_dataset(camelyon17_just_testset, "camelyon17_testset_shifted")
+    count_unique_labels_of_dataset(camelyon17_just_testset, "mnist_testset_shifted")
+    visualize_random_samples_from_clean_dataset(camelyon17_just_testset, "mnist_testset_shifted")
 
     return camelyon17_just_testset
