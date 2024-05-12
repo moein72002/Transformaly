@@ -70,7 +70,7 @@ class GTA(Dataset):
         val_transforms_list = [
             transforms.Resize((384, 384)) if use_imagenet else transforms.Resize((224, 224)),
             transforms.ToTensor(),
-            transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+            # transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
         ]
         val_transforms = Compose(val_transforms_list)
         self.transform = val_transforms
